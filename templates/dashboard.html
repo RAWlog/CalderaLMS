@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-4 p-md-5">
+    <div class="d-flex justify-content-between align-items-end mb-5">
+        <div>
+            <h5 class="text-secondary fw-normal">
+                {{ mentor.full_name if current_user.role == 'intern' else current_user.full_name }}
+            </h5>
+            <h1 class="display-5 fw-bold text-white">
+                {{ 'Курсы наставника' if current_user.role == 'intern' else 'Мои курсы' }}
+            </h1>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary btn-sm">Выйти</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4 col-lg-4">
+            
+            {% for course in courses %}
+            <div class="course-card">
+                <div class="course-header" onclick="toggleCourse('course-{{ course.id }}', this)">
+                    <span class="text-truncate">{{ course.title }}</span>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if current_user.role == 'mentor' %}
+                            <a href="{{ url_for('delete_course', id=course.id) }}" class="text-danger small" onclick="event.stopPropagation()"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                </div>
+                
+                <ul id="course-{{ course.id }}" class="topic-list">
+                    {% for chapter in course.chapters %}
+                    <li class="topic-item" 
+                        onclick="selectTopic(
+                            this, 
+                            '{{ chapter.id }}', 
+                            '{{ chapter.title }}', 
+                            `{{ chapter.description }}`
+                        )">
+                        <div class="d-flex align-items-center w-100">
+                            <span class="topic-num">{{ loop.index }}</span>
+                            <span class="text-truncate me-2">{{ chapter.title }}</span>
+                        </div>
+                        <i class="bi bi-chevron-right small"></i>
+                    </li>
+                    {% endfor %}
+
+                    {% if current_user.role == 'mentor' %}
+                    <li class="mt-2">
+                        <form action="{{ url_for('add_chapter', course_id=course.id) }}" method="POST">
+                            <button type="submit" class="topic-item add-new-btn w-100">
+                                <div><span class="topic-num text-muted">+</span><span>Новая тема</span></div>
+                            </button>
+                        </form>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endfor %}
+
+            {% if current_user.role == 'mentor' %}
+            <form action="{{ url_for('create_course') }}" method="POST" class="mt-3">
+                <div class="input-group">
+                    <input type="text" name="title" class="form-control bg-dark text-white border-secondary" placeholder="Название курса" required>
+                    <button class="btn btn-outline-light" type="submit"><i class="bi bi-plus-lg"></i></button>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="col-md-8 col-lg-8">
+            <div id="emptyState" class="empty-state">
+                <i class="bi bi-arrow-left-circle fs-1 mb-3 text-secondary"></i>
+                <h4 class="text-secondary">Выберите тему слева</h4>
+            </div>
+
+            <div id="detailsPanel" class="details-panel shadow-lg">
+                <form id="updateForm" method="POST" action="">
+                    
+                    <h1 class="text-center mb-5 fw-light text-white" id="displayTitle">Git</h1>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Тема</label>
+                        {% if current_user.role == 'mentor' %}
+                            <input type="text" name="title" id="inputTitle" class="form-control dark-input-clean">
+                        {% else %}
+                            <div class="field-value" id="staticTitle"></div>
+                        {% endif %}
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Описание</label>
+                        {% if current_user.role == 'mentor' %}
+                            <textarea name="description" id="inputDesc" class="form-control dark-input-clean" rows="3"></textarea>
+                            <button type="submit" class="btn btn-sm btn-outline-primary mt-2">Сохранить изменения текста</button>
+                        {% else %}
+                            <div class="field-value" id="staticDesc" style="white-space: pre-wrap;"></div>
+                        {% endif %}
+                    </div>
+                </form>
+
+                <div class="field-group mt-5">
+                    <label class="field-label mb-3">Прикрепленные файлы</label>
+                    <div id="filesListContainer">
+                        </div>
+                </div>
+
+                <form id="uploadForm" method="POST" enctype="multipart/form-data" action="">
+                    <div class="upload-area mt-4" onclick="document.getElementById('fileInput').click()">
+                        <div class="text-center">
+                            <div class="mb-3 text-white-50">
+                                {{ 'Прикрепить материал' if current_user.role == 'mentor' else 'Загрузить домашнее задание' }}
+                            </div>
+                            <i class="bi bi-plus-lg plus-icon"></i>
+                        </div>
+                        <input type="file" name="file" id="fileInput" hidden multiple>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const chaptersData = {
+        {% for course in courses %}
+            {% for chapter in course.chapters %}
+                "{{ chapter.id }}": {
+                    files: [
+                        {% for file in chapter.files %}
+                        {
+                            id: "{{ file.id }}",
+                            name: "{{ file.filename }}",
+                            size: "{{ file.file_size }}",
+                            role: "{{ file.uploader.role }}",
+                            uploaderName: "{{ file.uploader.full_name }}",
+                            downloadUrl: "{{ url_for('download', filename=file.filename) }}",
+                            deleteUrl: "{{ url_for('delete_file', file_id=file.id) }}",
+                            canDelete: {{ 'true' if (current_user.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }}
+                        },
+                        {% endfor %}
+                    ]
+                },
+            {% endfor %}
+        {% endfor %}
+    };
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ UI ---
+    
+    function toggleCourse(listId, header) {
+        const list = document.getElementById(listId);
+        header.classList.toggle('open');
+        list.classList.toggle('show');
+    }
+
+    // Храним текущий ID темы глобально, чтобы обновлять список файлов
+    let currentTopicId = null;
+
+    function selectTopic(el, id, title, desc) {
+        currentTopicId = id;
+
+        // 1. Подсветка активного элемента
+        document.querySelectorAll('.topic-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        
+        // 2. Показать панель
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('detailsPanel').style.display = 'block';
+
+        // 3. Заполнить данные формы (Текст)
+        if(document.getElementById('inputTitle')) {
+            document.getElementById('inputTitle').value = title;
+            document.getElementById('inputDesc').value = desc;
+            
+            // Настраиваем форму на AJAX отправку
+            const updateForm = document.getElementById('updateForm');
+            updateForm.onsubmit = (e) => submitUpdate(e, id);
+        } else {
+            // Режим просмотра (стажер)
+            document.getElementById('staticTitle').innerText = title;
+            document.getElementById('staticDesc').innerText = desc;
+        }
+        
+        document.getElementById('displayTitle').innerText = title;
+
+        // 4. Настроить форму загрузки файлов
+        const uploadForm = document.getElementById('uploadForm');
+        // Очищаем старый input, чтобы onchange срабатывал даже при выборе того же файла
+        document.getElementById('fileInput').value = ''; 
+        uploadForm.onchange = (e) => submitUpload(e, id);
+
+        // 5. Рендер файлов из JS-объекта (кэш)
+        renderFiles(id);
+    }
+
+    function renderFiles(topicId) {
+        const container = document.getElementById('filesListContainer');
+        container.innerHTML = '';
+        const files = chaptersData[topicId]?.files || [];
+
+        if (files.length === 0) {
+            container.innerHTML = '<div class="text-muted small">Файлов нет</div>';
+            return;
+        }
+
+        files.forEach(file => {
+            appendFileToDOM(file);
+        });
+    }
+
+    function appendFileToDOM(file) {
+        const container = document.getElementById('filesListContainer');
+        // Убираем надпись "Файлов нет", если она есть
+        if (container.innerHTML.includes('Файлов нет')) container.innerHTML = '';
+
+        let icon = 'bi-file-earmark-text';
+        if(file.name.includes('.doc')) icon = 'bi-file-earmark-word';
+        if(file.name.includes('.pdf')) icon = 'bi-file-earmark-pdf';
+        if(file.name.includes('.img') || file.name.includes('.png')) icon = 'bi-file-earmark-image';
+
+        let badge = '';
+        if (file.role === 'intern') {
+            badge = `<span class="badge bg-secondary ms-2 small">От: ${file.uploaderName}</span>`;
+        }
+
+        const html = `
+            <div class="file-item animate-fade-in">
+                <i class="bi ${icon} file-icon"></i>
+                <div class="flex-grow-1">
+                    <a href="${file.downloadUrl}" class="text-decoration-none text-white fw-medium">${file.name}</a>
+                    ${badge}
+                    <div class="small text-secondary">${file.size}</div>
+                </div>
+                ${file.canDelete ? `<a href="${file.deleteUrl}" class="text-secondary hover-red"><i class="bi bi-x-lg"></i></a>` : ''}
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+    }
+
+    // --- AJAX ФУНКЦИИ ---
+
+    // 1. Обновление текста (без перезагрузки)
+    async function submitUpdate(e, id) {
+        e.preventDefault(); // Остановить перезагрузку страницы!
+        const form = e.target;
+        const formData = new FormData(form);
+        const btn = form.querySelector('button[type="submit"]');
+        
+        const originalText = btn.innerText;
+        btn.innerText = "Сохранение...";
+        
+        try {
+            const response = await fetch(`/update_chapter/${id}`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                document.getElementById('displayTitle').innerText = data.title;
+                // Обновляем заголовок в боковом меню тоже
+                const activeItem = document.querySelector('.topic-item.active .text-truncate');
+                if(activeItem) activeItem.innerText = data.title;
+                
+                btn.className = "btn btn-sm btn-success mt-2";
+                btn.innerText = "Сохранено!";
+                setTimeout(() => {
+                    btn.className = "btn btn-sm btn-outline-primary mt-2";
+                    btn.innerText = originalText;
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка сохранения');
+        }
+    }
+
+    // 2. Загрузка файла (без перезагрузки)
+    async function submitUpload(e, id) {
+        const input = e.target.querySelector('input[type="file"]') || e.target; // input вызвавший событие
+        if (!input.files.length) return;
+
+        const formData = new FormData();
+        for (let i = 0; i < input.files.length; i++) {
+            formData.append('file', input.files[i]);
+        }
+
+        // Визуально показываем загрузку
+        const container = document.getElementById('filesListContainer');
+        const loader = document.createElement('div');
+        loader.innerHTML = '<div class="text-info small my-2">Загрузка...</div>';
+        container.appendChild(loader);
+
+        try {
+            const response = await fetch(`/upload_file/${id}`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            loader.remove(); // Убираем лоадер
+
+            if (data.status === 'success') {
+                // Добавляем новые файлы в глобальный объект данных
+                if (!chaptersData[id]) chaptersData[id] = { files: [] };
+                
+                data.files.forEach(file => {
+                    chaptersData[id].files.push(file); // Обновляем "память" страницы
+                    appendFileToDOM(file); // Рисуем файл
+                });
+            } else {
+                alert('Ошибка загрузки');
+            }
+        } catch (error) {
+            loader.remove();
+            console.error(error);
+        }
+    }
+
+    // 3. Добавление новой темы (без перезагрузки)
+    // В HTML нужно найти форму добавления и повесить на нее обработчик
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll('form[action*="add_chapter"]').forEach(form => {
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const btn = form.querySelector('button');
+                const courseId = form.action.split('/').pop(); // Вытаскиваем ID из URL
+
+                try {
+                    const response = await fetch(form.action, { method: 'POST' });
+                    const data = await response.json();
+
+                    if(data.status === 'success') {
+                        // Создаем HTML нового элемента
+                        const li = document.createElement('li');
+                        li.className = 'topic-item animate-fade-in';
+                        // Вставляем логику onclick с новыми данными
+                        li.onclick = function() {
+                            selectTopic(this, data.id, data.title, data.description);
+                        };
+                        
+                        li.innerHTML = `
+                            <div class="d-flex align-items-center w-100">
+                                <span class="topic-num">•</span>
+                                <span class="text-truncate me-2">${data.title}</span>
+                            </div>
+                            <i class="bi bi-chevron-right small"></i>
+                        `;
+                        
+                        // Вставляем ПЕРЕД кнопкой добавления (которая лежит в последнем li)
+                        const ul = form.closest('ul');
+                        const lastLi = ul.lastElementChild; 
+                        ul.insertBefore(li, lastLi);
+                        
+                        // Сразу открываем новую тему
+                        li.click();
+                    }
+                } catch(err) {
+                    console.error(err);
+                }
+            };
+        });
+    });
+
+</script>
+<style>
+    /* Анимация появления для плавности */
+    .animate-fade-in {
+        animation: fadeIn 0.5s;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}

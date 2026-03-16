@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="full-screen-center">
+    <div class="text-center animate-up">
+        <h5 class="text-secondary mb-3 text-uppercase small ls-2">Learning Management System</h5>
+        <h1 class="mb-5 fw-bold display-4 text-white">Добро пожаловать в команду <br><span style="color: var(--primary-glow)">Caldera</span>!</h1>
+        
+        <p class="text-white-50 mb-5">Пожалуйста, выберите вашу роль для входа в систему</p>
+
+        <div class="d-flex justify-content-center gap-4">
+            <a href="{{ url_for('login', role_req='mentor') }}" class="role-card">
+                <i class="bi bi-person-workspace fs-1 mb-3 text-white"></i>
+                <div class="fw-bold">Наставник</div>
+            </a>
+            <a href="{{ url_for('login', role_req='intern') }}" class="role-card">
+                <i class="bi bi-mortarboard fs-1 mb-3 text-white"></i>
+                <div class="fw-bold">Стажер</div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

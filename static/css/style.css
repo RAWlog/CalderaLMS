@@ -1,0 +1,294 @@
+:root {
+    --bg-body: #121212;         /* Глубокий черный фон */
+    --bg-surface: #1c1c1e;      /* Цвет карточек (графит) */
+    --bg-element: #2c2c2e;      /* Цвет элементов списка */
+    --primary-glow: #4f4bff;    /* Неоновый синий */
+    --text-main: #ffffff;
+    --text-muted: #8e8e93;
+    --border-radius: 20px;
+    --border-color: #333;
+}
+
+body {
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden; /* Запрещаем горизонтальный скролл */
+    /* Убираем вертикальный скролл, если он не нужен */
+    overflow-y: auto;
+}
+
+/* Красивый глобальный скроллбар (для всей страницы) */
+::-webkit-scrollbar {
+    width: 5px;
+}
+
+::-webkit-scrollbar-track {
+    width: 5px;
+    background: transparent; /* Цвет фона дорожки под цвет вашей темы */
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4f4bff;
+}
+
+/* --- Левая панель (Меню) --- */
+.course-card {
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius);
+    padding: 10px;
+    height: auto;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    overflow: hidden; /* Чтобы список не вылезал при сворачивании */
+}
+
+.course-header {
+    padding: 15px 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.25rem;
+    font-weight: 500;
+    user-select: none;
+    transition: color 0.3s;
+}
+
+.course-header:hover {
+    color: var(--primary-glow);
+}
+
+.course-header i {
+    transition: transform 0.3s ease;
+}
+
+/* Поворот стрелки */
+.course-header.open i {
+    transform: rotate(180deg);
+}
+
+/* Анимация аккордеона */
+.topic-list {
+    list-style: none;
+    padding: 0 10px;
+    margin: 0;
+    max-height: 0; /* Скрыто по умолчанию */
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.4s ease-in-out;
+}
+
+.topic-list.show {
+    max-height: 500px; /* Раскрытие */
+    opacity: 1;
+    padding-bottom: 10px;
+    margin-top: 5px;
+    overflow-y: auto;  /* Включаем вертикальную прокрутку */
+    padding-right: 5px; /* Отступ для красивого скроллбара */
+}
+
+/* Элемент темы */
+.topic-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: transparent;
+    border: 1px solid transparent; /* Чтобы не прыгало при активе */
+    border-radius: 15px;
+    padding: 12px 20px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+.topic-item:hover {
+    background-color: var(--bg-element);
+    color: white;
+}
+
+/* Активная тема (Свечение как на фото) */
+.topic-item.active {
+    border-color: var(--primary-glow);
+    background-color: rgba(79, 75, 255, 0.05);
+    box-shadow: 0 0 15px rgba(79, 75, 255, 0.3), inset 0 0 10px rgba(79, 75, 255, 0.1);
+    color: var(--primary-glow);
+}
+
+.topic-num {
+    display: inline-block;
+    width: 30px;
+    font-weight: bold;
+}
+
+/* Кнопка "Новая тема" */
+.add-new-btn {
+    border: 1px dashed #555;
+    opacity: 0.7;
+    justify-content: space-between;
+}
+.add-new-btn:hover {
+    opacity: 1;
+    border-color: #777;
+    background: transparent;
+}
+
+/* --- Правая панель --- */
+.details-panel {
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius);
+    padding: 40px;
+    border: 1px solid var(--border-color);
+    min-height: 600px;
+    display: none; /* Скрыто пока не выбрали тему */
+    animation: fadeIn 0.5s ease;
+}
+
+/* Плейсхолдер "Выберите тему" */
+.empty-state {
+    height: 400px;
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #444;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Поля ввода (стилизация линий) */
+.field-group {
+    margin-bottom: 2rem;
+}
+.field-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 8px;
+    display: block;
+}
+.field-value {
+    border-bottom: 1px solid #444;
+    padding-bottom: 8px;
+    font-size: 1.1rem;
+    color: #ddd;
+}
+
+/* Зона загрузки файлов */
+.upload-area {
+    background-color: #252528;
+    border-radius: 20px;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px dashed transparent; /* Скрытая рамка */
+}
+
+.upload-area:hover {
+    background-color: #2e2e32;
+    border-color: var(--primary-glow); /* Синяя рамка при наведении */
+}
+
+.plus-icon {
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: #ccc;
+    transition: transform 0.2s;
+}
+
+.upload-area:hover .plus-icon {
+    transform: scale(1.1);
+    color: var(--primary-glow);
+}
+
+/* Список добавленных файлов */
+.file-item {
+    background-color: var(--bg-element);
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    animation: slideIn 0.3s ease;
+    border: 1px solid #3a3a3c;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.file-icon {
+    font-size: 1.8rem;
+    margin-right: 15px;
+    color: #aaa;
+}
+
+.full-screen-center {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-card {
+    transform: translateY(-5%);
+}
+
+.btn-purple {
+    color: #5c16ff;              /* фиолетовый текст */
+    border-color: #5c16ff;       /* фиолетовая обводка */
+}
+
+.btn-purple:hover,
+.btn-purple:focus {
+    transition: color 0.5s ease, border-color 0.5s ease, background-color 0.5s ease;
+    background-color: #5c16ff;   /* фиолетовый фон */
+    color: #1e1e1e;              /* графитовый текст */
+    border-color: #5c16ff;
+}
+
+
+.dark-input {
+    background-color: #ffffff;
+    color: #1e1e1e;
+    border: 1px solid #ced4da;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+.dark-input::placeholder {
+    color: #9ca3af; /* серый плейсхолдер */
+}
+
+/* КОНТРОЛЬ СВЕЧЕНИЯ */
+.dark-input:focus {
+    background-color: #ffffff;
+    color: #1e1e1e;
+
+    border: 2px solid #5c16ff;
+    border-color: #5c16ff;
+    box-shadow: 0 0 0 0.4rem #370e98ab; 
+    /* ↑ сила и цвет свечения */
+    outline: none;
+    transition: border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
