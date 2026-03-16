@@ -3,12 +3,14 @@ from flask import Flask, render_template, redirect, url_for, request, flash, sen
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
+from datetime import timedelta
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'caldera-secret-key-123' # Для сессий
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB макс
+app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30) # Запомнить на месяц
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -66,7 +68,7 @@ def index():
         return redirect(url_for('dashboard'))
     return render_template('index.html')
 
-# 2. Логин (Единый для всех, роль определяется в БД)
+# 2. Логин (обновленная логика)
 @app.route('/login/<role_req>', methods=['GET', 'POST'])
 def login(role_req):
     if current_user.is_authenticated:
@@ -75,14 +77,19 @@ def login(role_req):
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        
+        # Получаем значение галочки из формы
+        # Если галочка нажата, придет 'on', если нет — None
+        remember_me = True if request.form.get('remember') else False
+        
         user = User.query.filter_by(username=username).first()
         
-        # Простая проверка (в реальности используй хеширование!)
         if user and user.password == password:
             if user.role != role_req:
-                flash(f'Ошибка! Этот логин принадлежит роли {user.role}, а вы входите как {role_req}', 'danger')
+                flash(f'Ошибка! Этот логин принадлежит роли {user.role}', 'danger')
             else:
-                login_user(user, remember=True)
+                # ПЕРЕДАЕМ ПЕРЕМЕННУЮ СЮДА
+                login_user(user, remember=remember_me)
                 return redirect(url_for('dashboard'))
         else:
             flash('Неверный логин или пароль', 'danger')

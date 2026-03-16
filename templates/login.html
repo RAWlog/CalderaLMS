@@ -2,66 +2,65 @@
 
 {% block content %}
 <div class="full-screen-center">
-    <div class="login-card shadow-lg mx-auto" style="width: 100%; max-width: 420px;">
-
-        <h2 class="text-center mb-1 text-white fw-light fs-1">
-            Авторизация
-        </h2>
-
-        <p class="text-center text-secondary mb-4 ">
-            Вход для роли:
-            <span class="text-uppercase fw-bold text-white">{{ role }}</span>
-        </p>
+    <div class="login-card animate-up">
+        <div class="login-card-edge"></div>
+        
+        <div class="text-center mb-4">
+            <h2 class="text-white fw-bold mb-2">Авторизация</h2>
+            <p class="text-muted small text-uppercase ls-1">
+                Вход для роли: <span class="brand-glow">{{ role }}</span>
+            </p>
+        </div>
 
         <form method="POST">
-            <div class="mb-3">
-                <input type="text"
-                       name="username"
-                       class="form-control dark-input"
-                       placeholder="Введите логин"
-                       required>
+            <div class="input-group-custom mb-3">
+                <i class="bi bi-person icon-field"></i>
+                <input type="text" name="username" class="dark-input" placeholder="Логин" required>
             </div>
 
-            <div class="mb-3">
-                <input type="password"
-                       name="password"
-                       class="form-control dark-input"
-                       placeholder="Введите пароль"
-                       required>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-4 small">
-                <div class="form-check">
-                    <input class="form-check-input dark-check"
-                           type="checkbox"
-                           id="remember"
-                           checked>
-                    <label class="form-check-label text-secondary" for="remember">
-                        Запомнить меня
-                    </label>
-                </div>
-
-                <a href="#" class="text-secondary text-decoration-none">
-                    Проблемы со входом?
-                </a>
-            </div>
-
-            <div class="d-grid mb-3">
-                <button type="submit" class="btn btn-outline-light btn-lg btn-purple">
-                    Войти
+            <div class="input-group-custom mb-3">
+                <i class="bi bi-shield-lock icon-field"></i>
+                <input type="password" name="password" id="password-input" class="dark-input" placeholder="Пароль" required>
+                <button type="button" class="password-toggle" onclick="togglePassword()">
+                    <i class="bi bi-eye" id="toggle-icon"></i>
                 </button>
             </div>
 
+            <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" name="remember" id="remember" checked>
+                    <label for="remember">Запомнить меня</label>
+                </div>
+                <a href="#" class="forgot-link">Проблемы со входом?</a>
+            </div>
+
+            <button type="submit" class="btn-login">
+                <span>Войти в систему</span>
+                <i class="bi bi-arrow-right-short fs-4"></i>
+            </button>
         </form>
 
-        <div class="text-center mt-2">
-            <a href="{{ url_for('index') }}"
-               class="text-secondary small text-decoration-none">
-                ← Вернуться назад
+        <div class="text-center mt-4">
+            <a href="{{ url_for('index') }}" class="back-link">
+                <i class="bi bi-chevron-left me-1"></i> Вернуться к выбору роли
             </a>
         </div>
-
     </div>
 </div>
-
+<script>
+function togglePassword() {
+    const input = document.getElementById('password-input');
+    const icon = document.getElementById('toggle-icon');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash'); // Меняем иконку на перечеркнутую
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+</script>
 {% endblock %}

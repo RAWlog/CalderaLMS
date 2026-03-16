@@ -4,7 +4,7 @@
     --bg-element: #2c2c2e;      /* Цвет элементов списка */
     --primary-glow: #4f4bff;    /* Неоновый синий */
     --text-main: #ffffff;
-    --text-muted: #8e8e93;
+    --text-muted: #bbbbbb;
     --border-radius: 20px;
     --border-color: #333;
 }
@@ -292,3 +292,255 @@ body {
     transition: border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
+
+
+
+
+/* --- Главная страница (Выбор роли) --- */
+
+/* Свечение для текста Caldera */
+.brand-glow {
+    color: var(--primary-glow);
+    text-shadow: 0 0 25px rgba(79, 75, 255, 0.5);
+}
+
+/* Разрядка букв для подзаголовка LMS */
+.tracking-widest {
+    letter-spacing: 0.2em;
+}
+
+/* Стилизация карточек ролей */
+.role-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 40px 30px;
+    width: 320px;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+}
+
+/* Декоративная линия сверху карточки (появляется при наведении) */
+.role-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+    background: var(--primary-glow);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+
+/* 1. Эффекты при наведении на саму карточку (чуть подправил тени) */
+.role-card:hover {
+    transform: translateY(-12px); /* Всплывает чуть выше для большей динамики */
+    border-color: rgba(79, 75, 255, 0.6); /* Чуть ярче граница */
+    background-color: #232327; /* Немного светлее фон */
+    /* Более глубокая и мягкая тень */
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(79, 75, 255, 0.2);
+}
+
+/* 1. Делаем текст описания ярче в обычном состоянии */
+.role-card .text-muted {
+    color: rgba(255, 255, 255, 0.7) !important; /* Белый цвет с прозрачностью 70% вместо стандартных 50% */
+    transition: all 0.4s ease; /* Чтобы все изменения были плавными */
+}
+
+/* 2. При наведении делаем его максимально ярким */
+.role-card:hover .text-muted {
+    color: #ffffff !important; /* Чистый белый цвет */
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.4); /* Мягкое свечение */
+}
+
+
+.role-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* Круглый контейнер для иконки */
+.card-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--bg-element);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    color: var(--text-main);
+    transition: all 0.4s ease;
+}
+
+/* Анимация иконки при наведении на карточку */
+.role-card:hover .card-icon-wrapper {
+    background-color: var(--primary-glow);
+    color: #fff;
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 0 20px rgba(79, 75, 255, 0.4);
+}
+
+
+
+
+/* --- Страница Логина --- */
+
+.login-card .text-muted, 
+.login-card .text-secondary {
+    color: rgba(255, 255, 255, 0.7) !important; /* Светло-серый, почти белый */
+}
+
+.login-card .brand-glow {
+    color: var(--primary-glow);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(79, 75, 255, 0.5);
+}
+
+.login-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 28px;
+    padding: 45px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+.login-card-edge {
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 5px;
+    background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
+}
+
+/* Кастомные инпуты */
+.input-group-custom {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.icon-field {
+    position: absolute;
+    left: 18px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 1.2rem;
+    transition: 0.3s;
+}
+
+.dark-input {
+    width: 100%;
+    padding: 14px 20px 14px 50px;
+    background: #1a1a1d;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    color: white !important;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.dark-input:focus {
+    border-color: var(--primary-glow);
+    background: #212124;
+    box-shadow: 0 0 15px rgba(79, 75, 255, 0.15);
+}
+
+.dark-input:focus + .icon-field, 
+.input-group-custom:focus-within .icon-field {
+    color: var(--primary-glow);
+}
+
+/* Кнопка входа */
+.btn-login {
+    width: 100%;
+    padding: 15px;
+    border-radius: 14px;
+    background: var(--primary-glow);
+    color: white;
+    border: none;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-login:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(79, 75, 255, 0.4);
+}
+
+/* Ссылки и чекбокс */
+.forgot-link, .back-link {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.forgot-link:hover, .back-link:hover {
+    color: white;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    accent-color: var(--primary-glow);
+    cursor: pointer;
+}
+
+/* Стили для кнопки-глазика */
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5); /* Делаем иконку светлой (50% прозрачности) */
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s ease;
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: #ffffff; /* При наведении иконка становится ярко-белой */
+}
+
+.password-toggle i {
+    font-size: 1.2rem; /* Размер иконки */
+}
+
+/* Корректируем отступ в инпуте, чтобы текст не залезал под глаз */
+.dark-input {
+    padding-right: 45px !important;
+}
+/* Убираем стандартный значок глаза в Microsoft Edge */
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}
+
+/* Убираем стандартные иконки в Chrome/Safari/Opera (если появятся) */
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    position: absolute;
+    right: 0;
+}
