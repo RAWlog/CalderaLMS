@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-4 p-md-5">
+    <!-- Шапка -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h6 class="text-secondary fw-normal m-0">Панель управления</h6>
+            <h1 class="display-5 fw-bold text-white">Администратор</h1>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary rounded-pill px-4">Выйти</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} bg-{{ category }} bg-opacity-10 text-{{ category }} border-0 mb-4 rounded-4">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row g-4">
+        <!-- ЛЕВАЯ КОЛОНКА: Форма создания (Теперь она точно будет видна!) -->
+        <div class="col-lg-4">
+            <div class="admin-card h-100">
+                <h4 class="text-white mb-4">Новый аккаунт</h4>
+                
+                <form action="{{ url_for('create_user') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="field-label">ФИО полностью</label>
+                        <input type="text" name="full_name" class="form-control dark-input-clean" required placeholder="Напр: Алексей Смирнов">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="field-label">Логин (для входа)</label>
+                        <input type="text" name="username" class="form-control dark-input-clean" required placeholder="smirnov_a">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="field-label">Пароль</label>
+                        <input type="password" name="password" class="form-control dark-input-clean" required placeholder="••••••••">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="field-label">Тип пользователя</label>
+                        <select name="role" id="roleSelect" class="form-select dark-input-clean" required>
+                            <option value="intern">Стажер</option>
+                            <option value="mentor">Наставник</option>
+                        </select>
+                    </div>
+
+                    <!-- Поле выбора наставника (только для стажеров) -->
+                    <div class="mb-4" id="mentorSelectBlock">
+                        <label class="field-label">Назначить наставника</label>
+                        <select name="mentor_id" class="form-select dark-input-clean">
+                            <option value="">-- Выберите из списка --</option>
+                            {% for mentor in mentors %}
+                                <option value="{{ mentor.id }}">{{ mentor.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-light w-100 rounded-pill py-2 fw-bold">Создать пользователя</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА: Списки -->
+        <div class="col-lg-8">
+            <div class="row g-4">
+                <!-- Список наставников -->
+                <div class="col-md-6">
+                    <div class="admin-card">
+                        <h5 class="text-white mb-4 d-flex justify-content-between">
+                            Наставники <span class="badge rounded-pill bg-white text-dark fs-6">{{ mentors|length }}</span>
+                        </h5>
+                        <div class="user-list">
+                            {% for mentor in mentors %}
+                            <div class="topic-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-white fw-medium">{{ mentor.full_name }}</div>
+                                    <div class="small text-secondary">@{{ mentor.username }}</div>
+                                </div>
+                                <form action="{{ url_for('delete_user', user_id=mentor.id) }}" method="POST">
+                                    <button type="submit" class="btn text-secondary hover-red p-0 border-0 bg-transparent" onclick="return confirm('Удалить наставника?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <p class="text-secondary small text-center my-4">Список пуст</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Список стажеров -->
+                <div class="col-md-6">
+                    <div class="admin-card">
+                        <h5 class="text-white mb-4 d-flex justify-content-between">
+                            Стажеры <span class="badge rounded-pill bg-white text-dark fs-6">{{ interns|length }}</span>
+                        </h5>
+                        <div class="user-list">
+                            {% for intern in interns %}
+                            <div class="topic-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-white fw-medium">{{ intern.full_name }}</div>
+                                    <div class="small text-secondary">
+                                        @{{ intern.username }} • 
+                                        <span class="text-info">{{ intern.mentor.full_name if intern.mentor else 'Без наставника' }}</span>
+                                    </div>
+                                </div>
+                                <form action="{{ url_for('delete_user', user_id=intern.id) }}" method="POST">
+                                    <button type="submit" class="btn text-secondary hover-red p-0 border-0 bg-transparent" onclick="return confirm('Удалить стажера?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <p class="text-secondary small text-center my-4">Список пуст</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Логика: если выбран "Наставник", скрываем выбор наставника
+    const roleSelect = document.getElementById('roleSelect');
+    const mentorBlock = document.getElementById('mentorSelectBlock');
+
+    roleSelect.addEventListener('change', function() {
+        if (this.value === 'mentor') {
+            mentorBlock.style.display = 'none';
+        } else {
+            mentorBlock.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

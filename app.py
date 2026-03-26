@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
 from datetime import timedelta
+import uuid
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'caldera-secret-key-123' # Для сессий
@@ -97,6 +98,22 @@ def login(role_req):
     return render_template('login.html', role=role_req)
 
 # 3. Дэшборд (Общий, но контент разный)
+# @app.route('/dashboard')
+# @login_required
+# def dashboard():
+#     # Определяем, чьи курсы показывать
+#     target_mentor = current_user
+    
+#     if current_user.role == 'intern':
+#         if not current_user.mentor_id:
+#             return "У вас нет наставника!"
+#         target_mentor = User.query.get(current_user.mentor_id)
+
+#     # Загружаем курсы целевого наставника
+#     courses = Course.query.filter_by(mentor_id=target_mentor.id).all()
+    
+#     return render_template('dashboard.html', courses=courses, mentor=target_mentor)
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -111,6 +128,27 @@ def dashboard():
     # Загружаем курсы целевого наставника
     courses = Course.query.filter_by(mentor_id=target_mentor.id).all()
     
+    # --- СИНХРОНИЗАЦИЯ: Отсеиваем "призраков" ---
+    for course in courses:
+        for chapter in course.chapters:
+            # Создаем пустой список для реально существующих файлов
+            chapter.active_files = [] 
+            
+            for file in chapter.files:
+                # Строим полный путь к файлу на жестком диске
+                full_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filepath)
+                
+                # Проверяем, существует ли файл физически
+                if os.path.exists(full_path):
+                    chapter.active_files.append(file)
+                else:
+                    # Если файла нет в папке, удаляем "мертвую" запись из базы данных
+                    db.session.delete(file)
+                    print(f"Удален призрачный файл из БД: {file.filename}") # Для отладки в консоли
+                    
+    # Сохраняем изменения в базе (если что-то было удалено)
+    db.session.commit()
+
     return render_template('dashboard.html', courses=courses, mentor=target_mentor)
 
 # --- API ДЛЯ ИЗМЕНЕНИЙ (Только Mentor) ---
@@ -165,6 +203,49 @@ def update_chapter(chapter_id):
     
     return jsonify({'status': 'error'}), 403
 
+# @app.route('/upload_file/<int:chapter_id>', methods=['POST'])
+# @login_required
+# def upload_file(chapter_id):
+#     if 'file' not in request.files:
+#         return jsonify({'status': 'error', 'msg': 'No file'})
+    
+#     files = request.files.getlist('file')
+#     uploaded_files_data = []
+
+#     for file in files:
+#         if file.filename == '': continue
+        
+#         filename = secure_filename(file.filename)
+#         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+#         file.save(path)
+        
+#         size = os.path.getsize(path)
+#         size_str = f"{size / 1024:.0f} Kb" if size < 1024*1024 else f"{size / (1024*1024):.2f} Mb"
+        
+#         new_file = File(
+#             filename=filename, 
+#             filepath=filename, 
+#             file_size=size_str, 
+#             chapter_id=chapter_id,
+#             uploader_id=current_user.id
+#         )
+#         db.session.add(new_file)
+#         db.session.commit() # Коммитим сразу, чтобы получить ID
+
+#         # Готовим данные для ответа
+#         uploaded_files_data.append({
+#             'id': new_file.id,
+#             'name': new_file.filename,
+#             'size': new_file.file_size,
+#             'role': current_user.role,
+#             'uploaderName': current_user.full_name,
+#             'downloadUrl': url_for('download', filename=new_file.filename),
+#             'deleteUrl': url_for('delete_file', file_id=new_file.id),
+#             'canDelete': True
+#         })
+    
+#     return jsonify({'status': 'success', 'files': uploaded_files_data})
+
 @app.route('/upload_file/<int:chapter_id>', methods=['POST'])
 @login_required
 def upload_file(chapter_id):
@@ -177,31 +258,42 @@ def upload_file(chapter_id):
     for file in files:
         if file.filename == '': continue
         
-        filename = secure_filename(file.filename)
-        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        # 1. Запоминаем оригинальное русское имя
+        original_filename = file.filename
+        
+        # 2. Вытаскиваем расширение (например, .pdf или .docx)
+        ext = os.path.splitext(original_filename)[1]
+        
+        # 3. Генерируем уникальное имя для папки uploads
+        safe_name = str(uuid.uuid4()) + ext
+        
+        # Сохраняем файл на диск под безопасным именем
+        path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name)
         file.save(path)
         
         size = os.path.getsize(path)
         size_str = f"{size / 1024:.0f} Kb" if size < 1024*1024 else f"{size / (1024*1024):.2f} Mb"
         
+        # 4. Записываем в базу оба имени
         new_file = File(
-            filename=filename, 
-            filepath=filename, 
+            filename=original_filename, # Русское имя для людей
+            filepath=safe_name,         # Уникальное имя (uuid) для файловой системы
             file_size=size_str, 
             chapter_id=chapter_id,
             uploader_id=current_user.id
         )
         db.session.add(new_file)
-        db.session.commit() # Коммитим сразу, чтобы получить ID
+        db.session.commit()
 
-        # Готовим данные для ответа
         uploaded_files_data.append({
             'id': new_file.id,
             'name': new_file.filename,
             'size': new_file.file_size,
             'role': current_user.role,
             'uploaderName': current_user.full_name,
-            'downloadUrl': url_for('download', filename=new_file.filename),
+            'canDownload': True,
+            # ОБРАТИ ВНИМАНИЕ: Теперь мы передаем file_id для скачивания
+            'downloadUrl': url_for('download', file_id=new_file.id),
             'deleteUrl': url_for('delete_file', file_id=new_file.id),
             'canDelete': True
         })
@@ -210,56 +302,78 @@ def upload_file(chapter_id):
 
 # --- ЗАГРУЗКА ФАЙЛОВ (Mentor и Intern) ---
 
-# @app.route('/upload_file/<int:chapter_id>', methods=['POST'])
+
+# @app.route('/download/<int:file_id>') # Теперь тут file_id, а не filename
 # @login_required
-# def upload_file(chapter_id):
-#     if 'file' not in request.files:
-#         return redirect(url_for('dashboard'))
+# def download(file_id):
+#     file_obj = File.query.get_or_404(file_id)
     
-#     files = request.files.getlist('file')
-#     for file in files:
-#         if file.filename == '':
-#             continue
-        
-#         filename = secure_filename(file.filename)
-#         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#         file.save(path)
-        
-#         # Красивый размер
-#         size = os.path.getsize(path)
-#         size_str = f"{size / 1024:.0f} Kb" if size < 1024*1024 else f"{size / (1024*1024):.2f} Mb"
-        
-#         new_file = File(
-#             filename=filename, 
-#             filepath=filename, # храним только имя в папке uploads
-#             file_size=size_str, 
-#             chapter_id=chapter_id,
-#             uploader_id=current_user.id
-#         )
-#         db.session.add(new_file)
-    
-#     db.session.commit()
-#     return redirect(url_for('dashboard'))
+#     # Берем файл с диска по безопасному имени (filepath), 
+#     # но отдаем пользователю под оригинальным русским (filename)
+#     return send_from_directory(
+#         app.config['UPLOAD_FOLDER'], 
+#         file_obj.filepath, 
+#         as_attachment=True,
+#         download_name=file_obj.filename 
+#     )
 
-@app.route('/download/<path:filename>')
+@app.route('/download/<int:file_id>')
 @login_required
-def download(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+def download(file_id):
+    file_obj = File.query.get_or_404(file_id)
+    
+    # --- ЗАЩИТА ОТ СПИСЫВАНИЯ ---
+    if current_user.role == 'intern':
+        # Находим пользователя, который загрузил файл
+        uploader = User.query.get(file_obj.uploader_id)
+        # Если файл загрузил стажер, и этот стажер НЕ текущий пользователь:
+        if uploader.role == 'intern' and file_obj.uploader_id != current_user.id:
+            return "У вас нет прав для скачивания чужого домашнего задания!", 403
+            
+    # Если проверка пройдена (это наставник, или автор файла, или материал курса)
+    return send_from_directory(
+        app.config['UPLOAD_FOLDER'], 
+        file_obj.filepath, 
+        as_attachment=True,
+        download_name=file_obj.filename 
+    )
 
-@app.route('/delete_file/<int:file_id>')
+# @app.route('/delete_file/<int:file_id>')
+# @login_required
+# def delete_file(file_id):
+#     file_obj = File.query.get_or_404(file_id)
+#     # Наставник удаляет все, Стажер только свои
+#     if current_user.role == 'mentor' or (current_user.role == 'intern' and file_obj.uploader_id == current_user.id):
+#         # Удаление физически (опционально)
+#         try:
+#             os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file_obj.filepath))
+#         except:
+#             pass
+#         db.session.delete(file_obj)
+#         db.session.commit()
+#     return redirect(url_for('dashboard'))
+@app.route('/delete_file/<int:file_id>', methods=['GET', 'POST', 'DELETE'])
 @login_required
 def delete_file(file_id):
     file_obj = File.query.get_or_404(file_id)
+    
     # Наставник удаляет все, Стажер только свои
     if current_user.role == 'mentor' or (current_user.role == 'intern' and file_obj.uploader_id == current_user.id):
-        # Удаление физически (опционально)
+        # Удаление физически с жесткого диска
         try:
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file_obj.filepath))
-        except:
-            pass
+            full_path = os.path.join(app.config['UPLOAD_FOLDER'], file_obj.filepath)
+            if os.path.exists(full_path):
+                os.remove(full_path)
+        except Exception as e:
+            print(f"Ошибка удаления файла: {e}")
+            
         db.session.delete(file_obj)
         db.session.commit()
-    return redirect(url_for('dashboard'))
+        
+        # Возвращаем JSON вместо redirect
+        return jsonify({'status': 'success', 'msg': 'Файл удален'})
+        
+    return jsonify({'status': 'error', 'msg': 'Нет прав'}), 403
 
 @app.route('/logout')
 def logout():
@@ -267,44 +381,81 @@ def logout():
     return redirect(url_for('index'))
 
 # --- СКРИПТ ДЛЯ СОЗДАНИЯ БД И ТЕСТОВЫХ ДАННЫХ ---
+# --- АДМИН ПАНЕЛЬ ---
+
+# 1. Обнови свой /setup один раз, чтобы создать админа
 @app.route('/setup')
 def setup():
     with app.app_context():
         db.create_all()
-        # Создаем Наставника
-        if not User.query.filter_by(username='smentor').first():
-            m = User(username='mentor', password='123', role='mentor', full_name='Александр Петров')
-            db.session.add(m)
-            db.session.commit()
-
-            l = User(username='l', password='123', role='mentor', full_name='Сергей Семенов')
-            db.session.add(l)
-            db.session.commit()
-
-            j = User(username='j', password='123', role='mentor', full_name='Лёва Батрудинов')
-            db.session.add(j)
+        # Создаем Админа
+        if not User.query.filter_by(username='admin').first():
+            admin = User(username='admin', password='123', role='admin', full_name='Главный Администратор')
+            db.session.add(admin)
             db.session.commit()
             
-            # Создаем Стажера, привязанного к наставнику
-            i = User(username='intern', password='123', role='intern', full_name='Иван Иванов', mentor_id=m.id)
-            db.session.add(i)
-            db.session.commit()
-
-            i2 = User(username='goga', password='123', role='intern', full_name='Егор Шапутинский', mentor_id=1)
-            db.session.add(i2)
-            db.session.commit()
+            # Если хочешь, можешь оставить тут создание тестовых наставников из старого кода
             
-            # # Создаем Курс
-            # c = Course(title='Git Basic', mentor_id=m.id)
-            # db.session.add(c)
-            # db.session.commit()
-            
-            # # Создаем главу
-            # ch = Chapter(title='Вступление', description='Установка и настройка', course_id=c.id)
-            # db.session.add(ch)
-            # db.session.commit()
+    return "База данных обновлена! Логин админа: admin / пароль: 123"
 
-    return "База данных создана! Логин: mentor/123 или intern/123"
+# 2. Главная страница админки
+@app.route('/admin')
+@login_required
+def admin_dashboard():
+    # Проверка, что сюда зашел именно админ
+    if current_user.role != 'admin':
+        return "У вас нет доступа к этой странице", 403
+        
+    mentors = User.query.filter_by(role='mentor').all()
+    interns = User.query.filter_by(role='intern').all()
+    
+    return render_template('admin.html', mentors=mentors, interns=interns)
+
+# 3. Маршрут для создания пользователей
+@app.route('/admin/create_user', methods=['POST'])
+@login_required
+def create_user():
+    if current_user.role != 'admin': return "Доступ запрещен", 403
+    
+    username = request.form.get('username')
+    password = request.form.get('password')
+    full_name = request.form.get('full_name')
+    role = request.form.get('role')
+    mentor_id = request.form.get('mentor_id')
+
+    # Проверка на дубликат логина
+    if User.query.filter_by(username=username).first():
+        flash('Пользователь с таким логином уже существует!', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+    new_user = User(username=username, password=password, full_name=full_name, role=role)
+    
+    # Привязываем наставника, если создаем стажера
+    if role == 'intern' and mentor_id:
+        new_user.mentor_id = int(mentor_id)
+
+    db.session.add(new_user)
+    db.session.commit()
+    flash('Учетная запись успешно создана!', 'success')
+    
+    return redirect(url_for('admin_dashboard'))
+
+# 4. Маршрут для удаления пользователей
+@app.route('/admin/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'admin': return "Доступ запрещен", 403
+    
+    user_to_delete = User.query.get_or_404(user_id)
+    
+    if user_to_delete.role == 'admin':
+        flash('Нельзя удалить администратора!', 'danger')
+        return redirect(url_for('admin_dashboard'))
+        
+    db.session.delete(user_to_delete)
+    db.session.commit()
+    
+    return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True)

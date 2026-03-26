@@ -544,3 +544,52 @@ input::-webkit-credentials-auto-fill-button {
     position: absolute;
     right: 0;
 }
+
+/* Стили специально для админки, чтобы всё отобразилось */
+    .admin-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 25px;
+        transition: all 0.3s ease;
+    }
+
+    .dark-input-clean {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        padding: 12px 15px !important;
+    }
+
+    .dark-input-clean:focus {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        box-shadow: none !important;
+    }
+
+    .field-label {
+        color: #888;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .hover-red:hover {
+        color: #ff4d4d !important;
+    }
+
+    .topic-item {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 12px;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        border: 1px solid transparent;
+    }
+
+    .topic-item:hover {
+        border-color: rgba(255, 255, 255, 0.1);
+    }

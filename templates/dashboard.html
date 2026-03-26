@@ -135,9 +135,10 @@
                             size: "{{ file.file_size }}",
                             role: "{{ file.uploader.role }}",
                             uploaderName: "{{ file.uploader.full_name }}",
-                            downloadUrl: "{{ url_for('download', filename=file.filename) }}",
+                            downloadUrl: "{{ url_for('download', file_id=file.id) }}",
                             deleteUrl: "{{ url_for('delete_file', file_id=file.id) }}",
-                            canDelete: {{ 'true' if (current_user.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }}
+                            canDelete: {{ 'true' if (current_user.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }},
+                            canDownload: {{ 'true' if (current_user.role == 'mentor' or file.uploader.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }}
                         },
                         {% endfor %}
                     ]
@@ -216,28 +217,35 @@
 
     function appendFileToDOM(file) {
         const container = document.getElementById('filesListContainer');
-        // Убираем надпись "Файлов нет", если она есть
         if (container.innerHTML.includes('Файлов нет')) container.innerHTML = '';
 
         let icon = 'bi-file-earmark-text';
         if(file.name.includes('.doc')) icon = 'bi-file-earmark-word';
         if(file.name.includes('.pdf')) icon = 'bi-file-earmark-pdf';
-        if(file.name.includes('.img') || file.name.includes('.png')) icon = 'bi-file-earmark-image';
+        if(file.name.includes('.png') || file.name.includes('.jpg')) icon = 'bi-file-earmark-image';
 
         let badge = '';
         if (file.role === 'intern') {
             badge = `<span class="badge bg-secondary ms-2 small">От: ${file.uploaderName}</span>`;
         }
 
+        // Генерируем ссылку или "заглушку"
+        let downloadElement = '';
+        if (file.canDownload) {
+            downloadElement = `<a href="${file.downloadUrl}" class="text-decoration-none text-white fw-medium">${file.name}</a>`;
+        } else {
+            downloadElement = `<span class="text-secondary fw-medium">${file.name} <i class="bi bi-lock-fill small ms-1" title="Чужое ДЗ"></i></span>`;
+        }
+
         const html = `
-            <div class="file-item animate-fade-in">
-                <i class="bi ${icon} file-icon"></i>
+            <div class="file-item animate-fade-in" data-file-id="${file.id}">
+                <i class="bi ${icon} file-icon ${file.canDownload ? '' : 'text-secondary'}"></i>
                 <div class="flex-grow-1">
-                    <a href="${file.downloadUrl}" class="text-decoration-none text-white fw-medium">${file.name}</a>
+                    ${downloadElement}
                     ${badge}
                     <div class="small text-secondary">${file.size}</div>
                 </div>
-                ${file.canDelete ? `<a href="${file.deleteUrl}" class="text-secondary hover-red"><i class="bi bi-x-lg"></i></a>` : ''}
+                ${file.canDelete ? `<a href="${file.deleteUrl}" class="text-secondary hover-red delete-file-btn"><i class="bi bi-x-lg"></i></a>` : ''}
             </div>
         `;
         container.insertAdjacentHTML('beforeend', html);
@@ -367,6 +375,45 @@
             };
         });
     });
+            document.addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('.delete-file-btn');
+            if (deleteBtn) {
+                e.preventDefault(); 
+                if (!confirm('Удалить этот файл?')) return; // Небольшая страховка
+
+                const url = deleteBtn.getAttribute('href');
+                const fileItem = deleteBtn.closest('.file-item');
+                const fileId = fileItem.getAttribute('data-file-id');
+
+                fetch(url, {
+                    method: 'POST', 
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // 1. Удаляем из DOM
+                        fileItem.style.transition = 'opacity 0.3s ease';
+                        fileItem.style.opacity = '0';
+                        setTimeout(() => {
+                            fileItem.remove();
+                            // Если файлов больше нет, пишем "Файлов нет"
+                            if (document.getElementById('filesListContainer').children.length === 0) {
+                                document.getElementById('filesListContainer').innerHTML = '<div class="text-muted small">Файлов нет</div>';
+                            }
+                        }, 300);
+
+                        // 2. ВАЖНО: Удаляем из локального кэша chaptersData
+                        if (currentTopicId && chaptersData[currentTopicId]) {
+                            chaptersData[currentTopicId].files = chaptersData[currentTopicId].files.filter(f => f.id != fileId);
+                        }
+                    } else {
+                        alert('Ошибка: ' + data.msg);
+                    }
+                })
+                .catch(error => console.error('Ошибка:', error));
+            }
+        });
 
 </script>
 <style>
