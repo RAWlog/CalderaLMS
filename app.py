@@ -53,7 +53,7 @@ class File(db.Model):
     file_size = db.Column(db.String(50))
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'))
     uploader_id = db.Column(db.Integer, db.ForeignKey('user.id')) # Кто загрузил (наставник или стажер)
-    
+    is_approved = db.Column(db.Boolean, default=False)
     uploader = db.relationship('User', backref='files')
 
 # --- ЛОГИКА ---
@@ -295,7 +295,8 @@ def upload_file(chapter_id):
             # ОБРАТИ ВНИМАНИЕ: Теперь мы передаем file_id для скачивания
             'downloadUrl': url_for('download', file_id=new_file.id),
             'deleteUrl': url_for('delete_file', file_id=new_file.id),
-            'canDelete': True
+            'canDelete': True,
+            'isApproved': False
         })
     
     return jsonify({'status': 'success', 'files': uploaded_files_data})
@@ -379,6 +380,19 @@ def delete_file(file_id):
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@app.route('/approve_file/<int:file_id>', methods=['POST'])
+@login_required
+def approve_file(file_id):
+    # Только наставник может принимать работы
+    if current_user.role != 'mentor':
+        return jsonify({'status': 'error', 'msg': 'Нет прав'}), 403
+        
+    file_obj = File.query.get_or_404(file_id)
+    file_obj.is_approved = True # Ставим галочку в базе
+    db.session.commit()
+    
+    return jsonify({'status': 'success'})
 
 # --- СКРИПТ ДЛЯ СОЗДАНИЯ БД И ТЕСТОВЫХ ДАННЫХ ---
 # --- АДМИН ПАНЕЛЬ ---

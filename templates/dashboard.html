@@ -2,55 +2,55 @@
 
 {% block content %}
 <div class="container-fluid p-4 p-md-5">
-    <div class="d-flex justify-content-between align-items-end mb-5">
+    <!-- Шапка страницы -->
+    <div class="d-flex justify-content-between align-items-end mb-5 animate-fade-in">
         <div>
-            <h5 class="text-secondary fw-normal">
+            <h5 class="text-white small text-uppercase tracking-widest mb-1">
                 {{ mentor.full_name if current_user.role == 'intern' else current_user.full_name }}
             </h5>
-            <h1 class="display-5 fw-bold text-white">
-                {{ 'Курсы наставника' if current_user.role == 'intern' else 'Мои курсы' }}
+            <h1 class="display-5 fw-bold text-white mb-0">
+                {{ 'Курсы наставника' if current_user.role == 'intern' else 'Мои курсы' }} <span class="brand-glow">LMS</span>
             </h1>
         </div>
-        <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary btn-sm">Выйти</a>
+        <a href="{{ url_for('logout') }}" class="btn-purple btn btn-outline-secondary btn-sm px-4 py-2" style="border-radius: 12px;">
+            <i class="bi bi-box-arrow-right me-2"></i>Выйти
+        </a>
     </div>
 
     <div class="row g-4">
+        <!-- Левая панель: Список курсов -->
         <div class="col-md-4 col-lg-4">
-            
             {% for course in courses %}
             <div class="course-card">
                 <div class="course-header" onclick="toggleCourse('course-{{ course.id }}', this)">
                     <span class="text-truncate">{{ course.title }}</span>
                     <div class="d-flex align-items-center gap-2">
                         {% if current_user.role == 'mentor' %}
-                            <a href="{{ url_for('delete_course', id=course.id) }}" class="text-danger small" onclick="event.stopPropagation()"><i class="bi bi-trash"></i></a>
+                            <a href="{{ url_for('delete_course', id=course.id) }}" class="text-muted hover-red small" onclick="event.stopPropagation()">
+                                <i class="bi bi-trash"></i>
+                            </a>
                         {% endif %}
-                        <i class="bi bi-chevron-down"></i>
+                        <i class="bi bi-chevron-down small"></i>
                     </div>
                 </div>
                 
                 <ul id="course-{{ course.id }}" class="topic-list">
                     {% for chapter in course.chapters %}
                     <li class="topic-item" 
-                        onclick="selectTopic(
-                            this, 
-                            '{{ chapter.id }}', 
-                            '{{ chapter.title }}', 
-                            `{{ chapter.description }}`
-                        )">
+                        onclick="selectTopic(this, '{{ chapter.id }}', '{{ chapter.title }}', `{{ chapter.description }}`)">
                         <div class="d-flex align-items-center w-100">
                             <span class="topic-num">{{ loop.index }}</span>
                             <span class="text-truncate me-2">{{ chapter.title }}</span>
                         </div>
-                        <i class="bi bi-chevron-right small"></i>
+                        <i class="bi bi-chevron-right small opacity-50"></i>
                     </li>
                     {% endfor %}
 
                     {% if current_user.role == 'mentor' %}
                     <li class="mt-2">
                         <form action="{{ url_for('add_chapter', course_id=course.id) }}" method="POST">
-                            <button type="submit" class="topic-item add-new-btn w-100">
-                                <div><span class="topic-num text-muted">+</span><span>Новая тема</span></div>
+                            <button type="submit" class="topic-item add-new-btn w-100 ">
+                                <div><span class="topic-num">+</span><span>Новая тема</span></div>
                             </button>
                         </form>
                     </li>
@@ -61,58 +61,79 @@
 
             {% if current_user.role == 'mentor' %}
             <form action="{{ url_for('create_course') }}" method="POST" class="mt-3">
-                <div class="input-group">
-                    <input type="text" name="title" class="form-control bg-dark text-white border-secondary" placeholder="Название курса" required>
-                    <button class="btn btn-outline-light" type="submit"><i class="bi bi-plus-lg"></i></button>
+                <div class="input-group-custom">
+                    <i class="bi bi-plus-circle icon-field"></i>
+                    <input type="text" name="title" class="dark-input" placeholder="Название курса" required>
+                    <button class="password-toggle border-0 bg-transparent" type="submit" style="right: 15px;">
+                        <i class="bi bi-arrow-right-short fs-3 text-white"></i>
+                    </button>
                 </div>
             </form>
             {% endif %}
         </div>
 
+        <!-- Правая панель: Детали темы -->
         <div class="col-md-8 col-lg-8">
+            <!-- Состояние "Не выбрано" -->
             <div id="emptyState" class="empty-state">
-                <i class="bi bi-arrow-left-circle fs-1 mb-3 text-secondary"></i>
-                <h4 class="text-secondary">Выберите тему слева</h4>
+                <div class="card-icon-wrapper mb-4">
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                </div>
+                <h4 class="text-white opacity-50 fw-light">Выберите тему из списка слева</h4>
+                <p class="text-muted small">Чтобы просмотреть материалы или сдать работу</p>
             </div>
 
+            <!-- Основная панель деталей -->
             <div id="detailsPanel" class="details-panel shadow-lg">
+                <!-- Декоративная линия сверху как в логине -->
+                <div class="login-card-edge"></div>
+
                 <form id="updateForm" method="POST" action="">
-                    
-                    <h1 class="text-center mb-5 fw-light text-white" id="displayTitle">Git</h1>
+                    <h1 class="text-center mb-5 fw-bold text-white brand-glow" id="displayTitle">---</h1>
                     
                     <div class="field-group">
-                        <label class="field-label">Тема</label>
+                        <label class="field-label">Название раздела</label>
                         {% if current_user.role == 'mentor' %}
-                            <input type="text" name="title" id="inputTitle" class="form-control dark-input-clean">
+                            <div class="input-group-custom">
+                                <i class="bi bi-pencil-square icon-field"></i>
+                                <input type="text" name="title" id="inputTitle" class="dark-input">
+                            </div>
                         {% else %}
                             <div class="field-value" id="staticTitle"></div>
                         {% endif %}
                     </div>
 
                     <div class="field-group">
-                        <label class="field-label">Описание</label>
+                        <label class="field-label">Описание и инструкции</label>
                         {% if current_user.role == 'mentor' %}
-                            <textarea name="description" id="inputDesc" class="form-control dark-input-clean" rows="3"></textarea>
-                            <button type="submit" class="btn btn-sm btn-outline-primary mt-2">Сохранить изменения текста</button>
+                            <textarea name="description" id="inputDesc" class="dark-input dark-input-clean w-100" rows="5" style="padding-left: 15px !important;"></textarea>
+                            <div class="text-end mt-3">
+                                <button type="submit" class="btn-login" style="width: auto; padding: 10px 25px;">
+                                    <span>Обновить описание</span>
+                                </button>
+                            </div>
                         {% else %}
-                            <div class="field-value" id="staticDesc" style="white-space: pre-wrap;"></div>
+                            <div class="field-value border-0" id="staticDesc" style="white-space: pre-wrap; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px;"></div>
                         {% endif %}
                     </div>
                 </form>
 
                 <div class="field-group mt-5">
-                    <label class="field-label mb-3">Прикрепленные файлы</label>
+                    <label class="field-label mb-3">Прикрепленные материалы</label>
                     <div id="filesListContainer">
-                        </div>
+                        <!-- Сюда JS будет рендерить блоки .file-item -->
+                    </div>
                 </div>
 
+                <!-- Зона загрузки -->
                 <form id="uploadForm" method="POST" enctype="multipart/form-data" action="">
-                    <div class="upload-area mt-4" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
                         <div class="text-center">
-                            <div class="mb-3 text-white-50">
-                                {{ 'Прикрепить материал' if current_user.role == 'mentor' else 'Загрузить домашнее задание' }}
+                            <i class="bi bi-cloud-arrow-up plus-icon mb-2"></i>
+                            <div class="text-white opacity-75 small">
+                                {{ 'Загрузить учебные материалы' if current_user.role == 'mentor' else 'Загрузить выполненное задание' }}
                             </div>
-                            <i class="bi bi-plus-lg plus-icon"></i>
+                            <div class="text-muted mt-1" style="font-size: 0.7rem;">Нажмите или перетащите файл сюда</div>
                         </div>
                         <input type="file" name="file" id="fileInput" hidden multiple>
                     </div>
@@ -122,6 +143,7 @@
     </div>
 </div>
 
+<!-- Скрипт данных для рендера -->
 <script>
     const chaptersData = {
         {% for course in courses %}
@@ -138,7 +160,8 @@
                             downloadUrl: "{{ url_for('download', file_id=file.id) }}",
                             deleteUrl: "{{ url_for('delete_file', file_id=file.id) }}",
                             canDelete: {{ 'true' if (current_user.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }},
-                            canDownload: {{ 'true' if (current_user.role == 'mentor' or file.uploader.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }}
+                            canDownload: {{ 'true' if (current_user.role == 'mentor' or file.uploader.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }},
+                            isApproved: {{ 'true' if file.is_approved else 'false' }}
                         },
                         {% endfor %}
                     ]
@@ -147,7 +170,6 @@
         {% endfor %}
     };
 </script>
-
 {% endblock %}
 
 {% block scripts %}
@@ -237,15 +259,30 @@
             downloadElement = `<span class="text-secondary fw-medium">${file.name} <i class="bi bi-lock-fill small ms-1" title="Чужое ДЗ"></i></span>`;
         }
 
+        // Логика галочки: 
+        const currentUserRole = "{{ current_user.role }}"; // Узнаем роль того, кто смотрит в экран
+        let approveElement = '';
+
+        if (file.isApproved) {
+            // Если уже проверено — показываем красивый зеленый статус
+            approveElement = `<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 ms-3" title="Работа принята"><i class="bi bi-check2-all"></i> Принято</span>`;
+        } else if (currentUserRole === 'mentor' && file.role === 'intern') {
+            // Если не проверено, и смотрит наставник на файл стажера — показываем кнопку
+            approveElement = `<button class="btn btn-sm text-success approve-file-btn ms-2 p-0 px-2" data-file-id="${file.id}" title="Отметить как проверенное"><i class="bi bi-check-circle fs-5 hover-success-icon"></i></button>`;
+        }
+
         const html = `
             <div class="file-item animate-fade-in" data-file-id="${file.id}">
                 <i class="bi ${icon} file-icon ${file.canDownload ? '' : 'text-secondary'}"></i>
-                <div class="flex-grow-1">
-                    ${downloadElement}
-                    ${badge}
-                    <div class="small text-secondary">${file.size}</div>
+                <div class="flex-grow-1 d-flex align-items-center">
+                    <div>
+                        ${downloadElement}
+                        ${badge}
+                        <div class="small text-secondary">${file.size}</div>
+                    </div>
+                    ${approveElement} <!-- ВСТАВЛЯЕМ ГАЛОЧКУ ИЛИ СТАТУС СЮДА -->
                 </div>
-                ${file.canDelete ? `<a href="${file.deleteUrl}" class="text-secondary hover-red delete-file-btn"><i class="bi bi-x-lg"></i></a>` : ''}
+                ${file.canDelete ? `<a href="#" data-url="${file.deleteUrl}" class="text-secondary hover-red delete-file-btn ms-3"><i class="bi bi-x-lg"></i></a>` : ''}
             </div>
         `;
         container.insertAdjacentHTML('beforeend', html);
@@ -414,6 +451,43 @@
                 .catch(error => console.error('Ошибка:', error));
             }
         });
+
+        // Обработка клика по кнопке "Принять работу"
+    document.addEventListener('click', function(e) {
+        const approveBtn = e.target.closest('.approve-file-btn');
+        
+        if (approveBtn) {
+            e.preventDefault();
+            const fileId = approveBtn.getAttribute('data-file-id');
+            const fileItem = approveBtn.closest('.file-item'); // находим весь блок файла
+            
+            // Заменяем иконку на спиннер загрузки, пока идет запрос
+            approveBtn.innerHTML = `<div class="spinner-border spinner-border-sm text-success" role="status"></div>`;
+            
+            fetch(`/approve_file/${fileId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Если сервер подтвердил, превращаем кнопку в зеленый бейджик
+                    const successBadge = document.createElement('span');
+                    successBadge.className = 'badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 ms-3 animate-fade-in';
+                    successBadge.innerHTML = '<i class="bi bi-check2-all"></i> Принято';
+                    
+                    // Плавно заменяем элемент
+                    approveBtn.replaceWith(successBadge);
+                } else {
+                    alert('Ошибка: ' + data.msg);
+                    approveBtn.innerHTML = `<i class="bi bi-check-circle fs-5"></i>`; // Возвращаем иконку при ошибке
+                }
+            })
+            .catch(error => {
+                console.error("Ошибка сети:", error);
+                approveBtn.innerHTML = `<i class="bi bi-check-circle fs-5"></i>`;
+            });
+        }
+    });
 
 </script>
 <style>

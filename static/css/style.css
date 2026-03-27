@@ -132,14 +132,16 @@ body {
 
 /* Кнопка "Новая тема" */
 .add-new-btn {
-    border: 1px dashed #555;
-    opacity: 0.7;
-    justify-content: space-between;
+    border: 1px dashed rgba(255, 255, 255, 0.3); /* Светлая пунктирная рамка */
+    opacity: 1; /* Убираем прозрачность всей кнопки */
+    color: rgba(255, 255, 255, 0.5); /* Делаем текст светлее */
+    background-color: rgba(255, 255, 255, 0.02); /* Легкий фон, чтобы кнопка выделялась */
 }
+
 .add-new-btn:hover {
-    opacity: 1;
-    border-color: #777;
-    background: transparent;
+    border-color: var(--primary-glow); /* Синяя рамка при наведении */
+    color: white; /* Белый текст при наведении */
+    background-color: rgba(79, 75, 255, 0.1); /* Синеватый фон */
 }
 
 /* --- Правая панель --- */
@@ -151,6 +153,8 @@ body {
     min-height: 600px;
     display: none; /* Скрыто пока не выбрали тему */
     animation: fadeIn 0.5s ease;
+    position: relative; 
+    overflow: hidden;
 }
 
 /* Плейсхолдер "Выберите тему" */
@@ -593,3 +597,16 @@ input::-webkit-credentials-auto-fill-button {
     .topic-item:hover {
         border-color: rgba(255, 255, 255, 0.1);
     }
+
+    .hover-success-icon:hover { color: #198754 !important; transform: scale(1.1); transition: 0.2s; }
+
+/* Делаем иконку мусорки видимой сразу */
+.course-header .bi-trash {
+    color: rgba(255, 255, 255, 0.5); /* Белый на 50% прозрачности */
+    transition: color 0.3s ease;
+}
+
+/* При наведении она станет ярко-красной */
+.course-header .bi-trash:hover {
+    color: #ff4d4d !important;
+}
