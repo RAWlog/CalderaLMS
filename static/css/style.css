@@ -600,13 +600,14 @@ input::-webkit-credentials-auto-fill-button {
 
     .hover-success-icon:hover { color: #198754 !important; transform: scale(1.1); transition: 0.2s; }
 
+    
 /* Делаем иконку мусорки видимой сразу */
-.course-header .bi-trash {
+.bi-trash {
     color: rgba(255, 255, 255, 0.5); /* Белый на 50% прозрачности */
     transition: color 0.3s ease;
 }
 
 /* При наведении она станет ярко-красной */
-.course-header .bi-trash:hover {
+.bi-trash:hover {
     color: #ff4d4d !important;
 }

@@ -158,19 +158,80 @@ def dashboard():
 def create_course():
     if current_user.role == 'mentor':
         title = request.form.get('title')
+        
+        # Небольшая защита от пустых имен
+        if not title or title.strip() == '':
+            return jsonify({'status': 'error', 'msg': 'Название не может быть пустым'}), 400
+            
         new_course = Course(title=title, mentor_id=current_user.id)
         db.session.add(new_course)
         db.session.commit()
-    return redirect(url_for('dashboard'))
+        
+        # Возвращаем JSON с ID и названием нового курса
+        return jsonify({
+            'status': 'success',
+            'id': new_course.id,
+            'title': new_course.title
+        })
+        
+    return jsonify({'status': 'error', 'msg': 'Нет прав'}), 403
 
-@app.route('/delete_course/<int:id>')
+# @app.route('/delete_course/<int:id>')
+# @login_required
+# def delete_course(id):
+#     course = Course.query.get_or_404(id)
+#     if current_user.role == 'mentor' and course.mentor_id == current_user.id:
+#         db.session.delete(course)
+#         db.session.commit()
+#     return redirect(url_for('dashboard'))
+
+@app.route('/delete_course/<int:id>', methods=['POST', 'GET']) # Убедись, что методы указаны
 @login_required
 def delete_course(id):
     course = Course.query.get_or_404(id)
-    if current_user.role == 'mentor' and course.mentor_id == current_user.id:
-        db.session.delete(course)
-        db.session.commit()
-    return redirect(url_for('dashboard'))
+    if course.mentor_id != current_user.id:
+        return jsonify({'status': 'error', 'msg': 'Чужое удалять нельзя!'}), 403
+    
+    db.session.delete(course)
+    db.session.commit()
+    
+    # Вместо redirect возвращаем успех
+    return jsonify({'status': 'success'})
+
+# @app.route('/delete_chapter/<int:id>')
+# @login_required
+# def delete_chapter(id):
+#     # Находим тему
+#     chapter = Chapter.query.get_or_404(id)
+#     # Находим курс, к которому она принадлежит
+#     course = Course.query.get(chapter.course_id)
+    
+#     # Проверяем права: только наставник и только владелец курса может удалить тему
+#     if current_user.role == 'mentor' and course.mentor_id == current_user.id:
+        
+#         # Сначала физически удаляем все файлы этой темы с диска
+#         for file_obj in chapter.files:
+#             try:
+#                 full_path = os.path.join(app.config['UPLOAD_FOLDER'], file_obj.filepath)
+#                 if os.path.exists(full_path):
+#                     os.remove(full_path)
+#             except Exception as e:
+#                 print(f"Ошибка физического удаления файла {file_obj.filename}: {e}")
+                
+#         # Затем удаляем саму тему из БД (связанные записи в File удалятся каскадно)
+#         db.session.delete(chapter)
+#         db.session.commit()
+        
+#     # Возвращаем на главную панель
+#     return redirect(url_for('dashboard'))
+
+@app.route('/delete_chapter/<int:id>', methods=['POST'])
+def delete_chapter(id):
+    chapter = Chapter.query.get_or_404(id)
+    db.session.delete(chapter)
+    db.session.commit()
+    # Возвращаем JSON, а не редирект!
+    return jsonify({'status': 'success', 'id': id})
 
 @app.route('/add_chapter/<int:course_id>', methods=['POST'])
 @login_required

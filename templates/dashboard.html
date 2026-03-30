@@ -13,8 +13,8 @@
             </h1>
         </div>
         <a href="{{ url_for('logout') }}" class="btn-purple btn btn-outline-secondary btn-sm px-4 py-2" style="border-radius: 12px;">
-            <i class="bi bi-box-arrow-right me-2"></i>Выйти
-        </a>
+        <i class="bi bi-box-arrow-right me-2"></i>Выйти
+    </a>
     </div>
 
     <div class="row g-4">
@@ -26,7 +26,7 @@
                     <span class="text-truncate">{{ course.title }}</span>
                     <div class="d-flex align-items-center gap-2">
                         {% if current_user.role == 'mentor' %}
-                            <a href="{{ url_for('delete_course', id=course.id) }}" class="text-muted hover-red small" onclick="event.stopPropagation()">
+                            <a href="{{ url_for('delete_course', id=course.id) }}" class="text-muted hover-red small" onclick="deleteCourseAjax(event, {{ course.id }}); return false;">
                                 <i class="bi bi-trash"></i>
                             </a>
                         {% endif %}
@@ -42,13 +42,18 @@
                             <span class="topic-num">{{ loop.index }}</span>
                             <span class="text-truncate me-2">{{ chapter.title }}</span>
                         </div>
+                        {% if current_user.role == 'mentor' %}
+                            <a href="{{ url_for('delete_chapter', id=chapter.id) }}" class="text-muted hover-red small me-3" onclick="deleteChapterAjax(event, '{{ chapter.id }}')" title="Удалить тему">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        {% endif %}
                         <i class="bi bi-chevron-right small opacity-50"></i>
                     </li>
                     {% endfor %}
 
                     {% if current_user.role == 'mentor' %}
                     <li class="mt-2">
-                        <form action="{{ url_for('add_chapter', course_id=course.id) }}" method="POST">
+                        <form action="{{ url_for('add_chapter', course_id=course.id) }}" method="POST"onsubmit="addChapterAjax(event, {{ course.id }})">
                             <button type="submit" class="topic-item add-new-btn w-100 ">
                                 <div><span class="topic-num">+</span><span>Новая тема</span></div>
                             </button>
@@ -60,7 +65,7 @@
             {% endfor %}
 
             {% if current_user.role == 'mentor' %}
-            <form action="{{ url_for('create_course') }}" method="POST" class="mt-3">
+            <form onsubmit="createCourseAjax(event)" class="mt-3">
                 <div class="input-group-custom">
                     <i class="bi bi-plus-circle icon-field"></i>
                     <input type="text" name="title" class="dark-input" placeholder="Название курса" required>
@@ -175,7 +180,107 @@
 {% block scripts %}
 <script>
     // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ UI ---
-    
+    async function createCourseAjax(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('/create_course', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            form.querySelector('input[name="title"]').value = '';
+
+            // Генерируем карточку. ВНИМАНИЕ на кавычки и ${data.id}
+            const courseHTML = `
+                <div class="course-card animate-fade-in">
+                    <div class="course-header" onclick="toggleCourse('course-${data.id}', this)">
+                        <span class="text-truncate">${data.title}</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="/delete_course/${data.id}" 
+                               class="text-muted hover-red small" 
+                               onclick="deleteCourseAjax(event, ${data.id})">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            <i class="bi bi-chevron-down small"></i>
+                        </div>
+                    </div>
+                    
+                    <ul id="course-${data.id}" class="topic-list">
+                        <li class="mt-2">
+                            <form action="/add_chapter/${data.id}" method="POST" onsubmit="addChapterAjax(event, ${data.id})">
+                                <button type="submit" class="topic-item add-new-btn w-100">
+                                    <div><span class="topic-num">+</span><span>Новая тема</span></div>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            `;
+            
+            // Вставляем перед формой создания (или в начало списка)
+            form.insertAdjacentHTML('beforebegin', courseHTML);
+            
+        }
+    } catch (e) { console.error(e); }
+}
+
+    async function deleteCourseAjax(event, courseId) {
+    // 1. Останавливаем переход по ссылке и всплытие (чтобы аккордеон не закрывался)
+    event.preventDefault();
+    event.stopPropagation();
+
+    // 2. Спрашиваем подтверждение
+    if (!confirm('Точно удалить этот курс со всеми материалами?')) return;
+
+    const url = event.currentTarget.getAttribute('href');
+
+    try {
+        // 3. Отправляем запрос на сервер
+        const response = await fetch(url, {
+            method: 'POST', // или GET, смотря что в роуте, но POST надежнее
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // 4. Находим карточку курса
+            // Мы ищем ближайший родительский элемент с классом .course-card
+            const courseCard = event.target.closest('.course-card');
+            
+            if (courseCard) {
+                // Добавляем эффект исчезновения (у тебя уже есть анимации в стиле)
+                courseCard.style.transition = 'all 0.4s ease';
+                courseCard.style.opacity = '0';
+                courseCard.style.transform = 'translateX(20px)';
+                
+                // Удаляем из документа после завершения анимации
+                setTimeout(() => {
+                    courseCard.remove();
+                    
+                    // Если удалили активный курс, который сейчас открыт справа — очищаем правую панель
+                    const detailsPanel = document.getElementById('detailsPanel');
+                    if (detailsPanel.style.display === 'block') {
+                        // Тут можно либо скрыть панель, либо проверить, относится ли она к удаленному курсу
+                        // Для простоты — если список тем пуст, показываем emptyState
+                        document.getElementById('emptyState').style.display = 'flex';
+                        detailsPanel.style.display = 'none';
+                    }
+                }, 400);
+            }
+        } else {
+            alert('Ошибка: ' + (data.msg || 'Не удалось удалить курс'));
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении:', error);
+        alert('Связь с сервером потеряна');
+    }
+}
+
     function toggleCourse(listId, header) {
         const list = document.getElementById(listId);
         header.classList.toggle('open');
@@ -296,10 +401,10 @@
         const form = e.target;
         const formData = new FormData(form);
         const btn = form.querySelector('button[type="submit"]');
-        
-        const originalText = btn.innerText;
-        btn.innerText = "Сохранение...";
-        
+        const span = btn.querySelector('span') || btn; 
+        const originalText = span.innerText;
+        span.innerText = "Сохранение...";
+
         try {
             const response = await fetch(`/update_chapter/${id}`, {
                 method: 'POST',
@@ -309,15 +414,21 @@
             
             if (data.status === 'success') {
                 document.getElementById('displayTitle').innerText = data.title;
-                // Обновляем заголовок в боковом меню тоже
                 const activeItem = document.querySelector('.topic-item.active .text-truncate');
                 if(activeItem) activeItem.innerText = data.title;
                 
-                btn.className = "btn btn-sm btn-success mt-2";
-                btn.innerText = "Сохранено!";
+                span.innerText = "Сохранено!";
+                // Меняем цвет фона инлайном, не трогая классы из style.css
+                btn.style.backgroundColor = "rgba(25, 135, 84, 0.2)"; // Полупрозрачный зеленый
+                btn.style.borderColor = "#198754";
+                btn.style.color = "#20c997";
+                
                 setTimeout(() => {
-                    btn.className = "btn btn-sm btn-outline-primary mt-2";
-                    btn.innerText = originalText;
+                    span.innerText = originalText;
+                    // Возвращаем как было
+                    btn.style.backgroundColor = "";
+                    btn.style.borderColor = "";
+                    btn.style.color = "";
                 }, 2000);
             }
         } catch (error) {
@@ -368,51 +479,102 @@
         }
     }
 
-    // 3. Добавление новой темы (без перезагрузки)
-    // В HTML нужно найти форму добавления и повесить на нее обработчик
-    document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll('form[action*="add_chapter"]').forEach(form => {
-            form.onsubmit = async (e) => {
-                e.preventDefault();
-                const btn = form.querySelector('button');
-                const courseId = form.action.split('/').pop(); // Вытаскиваем ID из URL
+    // 3. Добавление новой темы (универсальная функция)
+    async function addChapterAjax(event, courseId) {
+        event.preventDefault(); // Останавливаем перезагрузку страницы!
+        
+        const form = event.target;
+        
+        try {
+            const response = await fetch(form.action, { method: 'POST' });
+            const data = await response.json();
 
-                try {
-                    const response = await fetch(form.action, { method: 'POST' });
-                    const data = await response.json();
+            if (data.status === 'success') {
+                // Создаем HTML нового элемента
+                const li = document.createElement('li');
+                li.className = 'topic-item animate-fade-in';
+                
+                // Вставляем логику onclick с новыми данными
+                li.onclick = function() {
+                    selectTopic(this, data.id, data.title, data.description);
+                };
+                
+                li.innerHTML = `
+                    <div class="d-flex align-items-center w-100">
+                        <span class="topic-num">•</span>
+                        <span class="text-truncate me-2">${data.title}</span>
+                    </div>
+                    <a href="/delete_chapter/${data.id}" 
+                    class="text-muted hover-red small me-3" 
+                    onclick="deleteChapterAjax(event, '${data.id}')" 
+                    title="Удалить тему">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                    <i class="bi bi-chevron-right small opacity-50"></i>
+                `;
+                
+                // Вставляем ПЕРЕД кнопкой добавления (которая лежит в последнем li)
+                const ul = form.closest('ul');
+                const lastLi = ul.lastElementChild; 
+                ul.insertBefore(li, lastLi);
+                
+                // Сразу открываем новую тему
+                li.click();
+            } else {
+                alert('Ошибка сервера: ' + (data.msg || 'Не удалось создать тему'));
+            }
+        } catch(err) {
+            console.error('Ошибка добавления темы:', err);
+        }
+    }
 
-                    if(data.status === 'success') {
-                        // Создаем HTML нового элемента
-                        const li = document.createElement('li');
-                        li.className = 'topic-item animate-fade-in';
-                        // Вставляем логику onclick с новыми данными
-                        li.onclick = function() {
-                            selectTopic(this, data.id, data.title, data.description);
-                        };
-                        
-                        li.innerHTML = `
-                            <div class="d-flex align-items-center w-100">
-                                <span class="topic-num">•</span>
-                                <span class="text-truncate me-2">${data.title}</span>
-                            </div>
-                            <i class="bi bi-chevron-right small"></i>
-                        `;
-                        
-                        // Вставляем ПЕРЕД кнопкой добавления (которая лежит в последнем li)
-                        const ul = form.closest('ul');
-                        const lastLi = ul.lastElementChild; 
-                        ul.insertBefore(li, lastLi);
-                        
-                        // Сразу открываем новую тему
-                        li.click();
-                    }
-                } catch(err) {
-                    console.error(err);
-                }
-            };
+    async function deleteChapterAjax(event, chapterId) {
+    // 1. Останавливаем переход и выбор темы
+    event.preventDefault();
+    event.stopPropagation();
+
+    // 2. Подтверждение
+    if (!confirm('Удалить эту тему со всеми вложенными файлами?')) return;
+
+    const url = event.currentTarget.getAttribute('href');
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
-    });
-            document.addEventListener('click', function(e) {
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // 3. Находим элемент списка темы
+            const chapterItem = event.target.closest('.topic-item');
+            
+            if (chapterItem) {
+                // Анимация исчезновения
+                chapterItem.style.transition = 'all 0.3s ease';
+                chapterItem.style.opacity = '0';
+                chapterItem.style.transform = 'translateX(-20px)';
+                
+                setTimeout(() => {
+                    chapterItem.remove();
+                    
+                    // 4. Если мы удалили тему, которая сейчас открыта справа — закрываем панель
+                    if (currentTopicId == chapterId) {
+                        document.getElementById('emptyState').style.display = 'flex';
+                        document.getElementById('detailsPanel').style.display = 'none';
+                        currentTopicId = null;
+                    }
+                }, 300);
+            }
+        } else {
+            alert('Ошибка: ' + (data.msg || 'Не удалось удалить тему'));
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении темы:', error);
+    }
+}
+
+    document.addEventListener('click', function(e) {
             const deleteBtn = e.target.closest('.delete-file-btn');
             if (deleteBtn) {
                 e.preventDefault(); 
