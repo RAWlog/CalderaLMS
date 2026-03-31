@@ -5,6 +5,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.utils import secure_filename
 from datetime import timedelta
 import uuid
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'caldera-secret-key-123' # Для сессий
@@ -31,7 +32,8 @@ class User(db.Model, UserMixin):
     
     # Если это стажер, он привязан к наставнику
     mentor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    interns = db.relationship('User', remote_side=[id], backref='mentor')
+    #interns = db.relationship('User', remote_side=[id], backref='mentor')
+    mentor = db.relationship('User', remote_side=[id], backref='interns')
 
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -54,6 +56,8 @@ class File(db.Model):
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'))
     uploader_id = db.Column(db.Integer, db.ForeignKey('user.id')) # Кто загрузил (наставник или стажер)
     is_approved = db.Column(db.Boolean, default=False)
+    # ДОБАВЛЯЕМ ЭТУ СТРОКУ:
+    upload_date = db.Column(db.DateTime, default=datetime.now)
     uploader = db.relationship('User', backref='files')
 
 # --- ЛОГИКА ---
@@ -318,23 +322,17 @@ def upload_file(chapter_id):
 
     for file in files:
         if file.filename == '': continue
-        
         # 1. Запоминаем оригинальное русское имя
         original_filename = file.filename
-        
         # 2. Вытаскиваем расширение (например, .pdf или .docx)
         ext = os.path.splitext(original_filename)[1]
-        
         # 3. Генерируем уникальное имя для папки uploads
         safe_name = str(uuid.uuid4()) + ext
-        
         # Сохраняем файл на диск под безопасным именем
         path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name)
         file.save(path)
-        
         size = os.path.getsize(path)
         size_str = f"{size / 1024:.0f} Kb" if size < 1024*1024 else f"{size / (1024*1024):.2f} Mb"
-        
         # 4. Записываем в базу оба имени
         new_file = File(
             filename=original_filename, # Русское имя для людей
@@ -345,7 +343,6 @@ def upload_file(chapter_id):
         )
         db.session.add(new_file)
         db.session.commit()
-
         uploaded_files_data.append({
             'id': new_file.id,
             'name': new_file.filename,
@@ -357,9 +354,10 @@ def upload_file(chapter_id):
             'downloadUrl': url_for('download', file_id=new_file.id),
             'deleteUrl': url_for('delete_file', file_id=new_file.id),
             'canDelete': True,
-            'isApproved': False
+            'isApproved': False,
+            # ДОБАВЛЯЕМ ФОРМАТИРОВАННУЮ ДАТУ:
+            'uploadedAt': new_file.upload_date.strftime('%d.%m.%Y %H:%M')
         })
-    
     return jsonify({'status': 'success', 'files': uploaded_files_data})
 
 # --- ЗАГРУЗКА ФАЙЛОВ (Mentor и Intern) ---
@@ -487,6 +485,8 @@ def admin_dashboard():
     return render_template('admin.html', mentors=mentors, interns=interns)
 
 # 3. Маршрут для создания пользователей
+
+
 @app.route('/admin/create_user', methods=['POST'])
 @login_required
 def create_user():

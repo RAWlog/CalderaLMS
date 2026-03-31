@@ -39,7 +39,7 @@
                     <li class="topic-item" 
                         onclick="selectTopic(this, '{{ chapter.id }}', '{{ chapter.title }}', `{{ chapter.description }}`)">
                         <div class="d-flex align-items-center w-100">
-                            <span class="topic-num">{{ loop.index }}</span>
+                            <span class="topic-num"></span>
                             <span class="text-truncate me-2">{{ chapter.title }}</span>
                         </div>
                         {% if current_user.role == 'mentor' %}
@@ -85,7 +85,7 @@
                     <i class="bi bi-journal-bookmark-fill"></i>
                 </div>
                 <h4 class="text-white opacity-50 fw-light">Выберите тему из списка слева</h4>
-                <p class="text-muted small">Чтобы просмотреть материалы или сдать работу</p>
+                <p class="text-white small">Чтобы просмотреть материалы или сдать работу</p>
             </div>
 
             <!-- Основная панель деталей -->
@@ -135,10 +135,10 @@
                     <div class="upload-area" onclick="document.getElementById('fileInput').click()">
                         <div class="text-center">
                             <i class="bi bi-cloud-arrow-up plus-icon mb-2"></i>
-                            <div class="text-white opacity-75 small">
+                            <div class="text-white opacity-85">
                                 {{ 'Загрузить учебные материалы' if current_user.role == 'mentor' else 'Загрузить выполненное задание' }}
                             </div>
-                            <div class="text-muted mt-1" style="font-size: 0.7rem;">Нажмите или перетащите файл сюда</div>
+                            <div class="text-white mt-1" style="font-size: 0.7rem;">Нажмите или перетащите файл сюда</div>
                         </div>
                         <input type="file" name="file" id="fileInput" hidden multiple>
                     </div>
@@ -166,7 +166,8 @@
                             deleteUrl: "{{ url_for('delete_file', file_id=file.id) }}",
                             canDelete: {{ 'true' if (current_user.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }},
                             canDownload: {{ 'true' if (current_user.role == 'mentor' or file.uploader.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }},
-                            isApproved: {{ 'true' if file.is_approved else 'false' }}
+                            isApproved: {{ 'true' if file.is_approved else 'false' }},
+                            uploadedAt: "{{ file.upload_date.strftime('%d.%m.%Y %H:%M') if file.upload_date else '' }}"
                         },
                         {% endfor %}
                     ]
@@ -333,7 +334,7 @@
         const files = chaptersData[topicId]?.files || [];
 
         if (files.length === 0) {
-            container.innerHTML = '<div class="text-muted small">Файлов нет</div>';
+            container.innerHTML = '<div class="text-white small">Файлов нет</div>';
             return;
         }
 
@@ -377,18 +378,39 @@
         }
 
         const html = `
-            <div class="file-item animate-fade-in" data-file-id="${file.id}">
-                <i class="bi ${icon} file-icon ${file.canDownload ? '' : 'text-secondary'}"></i>
-                <div class="flex-grow-1 d-flex align-items-center">
-                    <div>
-                        ${downloadElement}
-                        ${badge}
-                        <div class="small text-secondary">${file.size}</div>
-                    </div>
-                    ${approveElement} <!-- ВСТАВЛЯЕМ ГАЛОЧКУ ИЛИ СТАТУС СЮДА -->
+            <div class="file-item animate-fade-in d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3 p-3 mb-3" data-file-id="${file.id}">
+            
+            <!-- Основной блок с файлом (Иконка + Инфо) -->
+            <div class="d-flex align-items-start align-items-sm-center w-100" style="min-width: 0;">
+                <!-- Иконка вынесена в отдельный блок, чтобы не сжималась -->
+                <div class="me-3 fs-3 mt-1 mt-sm-0 flex-shrink-0">
+                    <i class="bi ${icon} file-icon ${file.canDownload ? '' : 'text-secondary'}"></i>
                 </div>
-                ${file.canDelete ? `<a href="#" data-url="${file.deleteUrl}" class="text-secondary hover-red delete-file-btn ms-3"><i class="bi bi-x-lg"></i></a>` : ''}
+                
+                <!-- Контейнер с текстом (min-width: 0 спасает от разрыва контейнера длинным текстом) -->
+                <div class="flex-grow-1" style="min-width: 0;">
+                    <div class="d-block w-100 mb-1">
+                        ${downloadElement}
+                    </div>
+                    
+                    <!-- Бейджики и размер аккуратно переносятся на новую строку, если не влезают -->
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="small text-secondary">${file.size}</span>
+                        ${badge}
+                        ${approveElement}
+                    </div>
+                </div>
             </div>
+
+            <!-- Мета-информация (Дата + Кнопка удаления) -->
+            <div class="d-flex align-items-center justify-content-between w-100 w-sm-auto mt-2 mt-sm-0 ms-sm-auto border-top border-secondary border-opacity-25 pt-2 pt-sm-0" style="border-top-width: 1px;">
+                <span class="text-white small" style="font-size: 0.85rem; opacity: 0.7; white-space: nowrap;">
+                    ${file.uploadedAt}
+                </span>
+                ${file.canDelete ? `<a href="#" data-url="${file.deleteUrl}" class="text-secondary hover-red delete-file-btn ms-3"><i class="bi bi-x-lg fs-5"></i></a>` : ''}
+            </div>
+            
+        </div>
         `;
         container.insertAdjacentHTML('beforeend', html);
     }
@@ -501,7 +523,7 @@
                 
                 li.innerHTML = `
                     <div class="d-flex align-items-center w-100">
-                        <span class="topic-num">•</span>
+                        <span class="topic-num"></span> <!-- CSS сам вставит сюда правильный номер -->
                         <span class="text-truncate me-2">${data.title}</span>
                     </div>
                     <a href="/delete_chapter/${data.id}" 

@@ -52,16 +52,17 @@
                     </div>
 
                     <!-- Поле выбора наставника (только для стажеров) -->
-                    <div class="mb-4" id="mentorSelectBlock">
-                        <label class="field-label">Назначить наставника</label>
-                        <select name="mentor_id" class="form-select dark-input-clean">
-                            <option value="">-- Выберите из списка --</option>
-                            {% for mentor in mentors %}
-                                <option value="{{ mentor.id }}">{{ mentor.full_name }}</option>
+                    <div id="mentorSelectBlock" class="mb-4">
+                        <label>Выберите наставника:</label>
+                        <select name="mentor_id" class="form-control dark-input-clean">
+                            <option value="">-- Без наставника --</option>
+                            {% for m in mentors %}
+                                <option value="{{ m.id }}">{{ m.full_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
+                    
                     <button type="submit" class="btn btn-light w-100 rounded-pill py-2 fw-bold">Создать пользователя</button>
                 </form>
             </div>
@@ -95,6 +96,7 @@
                         </div>
                     </div>
                 </div>
+                
 
                 <!-- Список стажеров -->
                 <div class="col-md-6">
@@ -110,6 +112,7 @@
                                     <div class="small text-secondary">
                                         @{{ intern.username }} • 
                                         <span class="text-info">{{ intern.mentor.full_name if intern.mentor else 'Без наставника' }}</span>
+                                        <!-- <span>ID наставника в базе: {{ intern.mentor_id }}</span> -->
                                     </div>
                                 </div>
                                 <form action="{{ url_for('delete_user', user_id=intern.id) }}" method="POST">
@@ -130,13 +133,16 @@
 </div>
 
 <script>
-    // Логика: если выбран "Наставник", скрываем выбор наставника
     const roleSelect = document.getElementById('roleSelect');
     const mentorBlock = document.getElementById('mentorSelectBlock');
+    const mentorIdSelect = mentorBlock.querySelector('select[name="mentor_id"]');
 
     roleSelect.addEventListener('change', function() {
         if (this.value === 'mentor') {
             mentorBlock.style.display = 'none';
+            // Если выбран наставник, сбрасываем выбор связи, 
+            // чтобы случайно не привязать наставника к другому наставнику
+            mentorIdSelect.value = ""; 
         } else {
             mentorBlock.style.display = 'block';
         }

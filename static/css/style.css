@@ -611,3 +611,56 @@ input::-webkit-credentials-auto-fill-button {
 .bi-trash:hover {
     color: #ff4d4d !important;
 }
+
+/* Обнуляем счетчик для каждого списка тем внутри курса */
+.topic-list {
+    counter-reset: topic-counter;
+}
+
+/* Увеличиваем счетчик для каждого элемента, который НЕ является кнопкой добавления */
+.topic-item:not(.add-new-btn) {
+    counter-increment: topic-counter;
+}
+
+/* Выводим номер прямо внутрь спана */
+.topic-item:not(.add-new-btn) .topic-num::before {
+    content: counter(topic-counter);
+}
+
+/* Опционально: фиксированная ширина для выравнивания, если ее еще нет */
+.topic-num {
+    display: inline-block;
+    min-width: 24px;
+    font-weight: 500;
+}
+
+/* Общие стили для темных полей ввода */
+.dark-input-clean {
+    background-color: #1e1e1e !important; /* Насыщенный темный фон */
+    border: 1px solid #333 !important;
+    color: #fff !important;
+    border-radius: 12px !important; /* Закругляем углы */
+    padding: 10px 15px;
+}
+
+.dark-input-clean:focus {
+    background-color: #252525 !important;
+    border-color: #555 !important;
+    box-shadow: none !important;
+}
+
+/* Исправляем выпадающий список (белый фон и текст) */
+.dark-input-clean option {
+    background-color: #1e1e1e; /* Фон выпадающих пунктов */
+    color: #fff; /* Цвет текста пунктов */
+    padding: 10px;
+}
+
+/* Убираем стандартную синюю подсветку в некоторых браузерах */
+select.dark-input-clean {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
