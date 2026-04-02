@@ -403,8 +403,8 @@
             </div>
 
             <!-- Мета-информация (Дата + Кнопка удаления) -->
-            <div class="d-flex align-items-center justify-content-between w-100 w-sm-auto mt-2 mt-sm-0 ms-sm-auto border-top border-secondary border-opacity-25 pt-2 pt-sm-0" style="border-top-width: 1px;">
-                <span class="text-white small" style="font-size: 0.85rem; opacity: 0.7; white-space: nowrap;">
+            <div class="d-flex align-items-center justify-content-end w-100" style="border-top-width: 1px;">
+                <span class="text-white small" style="font-size: 0.85rem; opacity: 0.7;">
                     ${file.uploadedAt}
                 </span>
                 ${file.canDelete ? `<a href="#" data-url="${file.deleteUrl}" class="text-secondary hover-red delete-file-btn ms-3"><i class="bi bi-x-lg fs-5"></i></a>` : ''}
@@ -601,8 +601,8 @@
             if (deleteBtn) {
                 e.preventDefault(); 
                 if (!confirm('Удалить этот файл?')) return; // Небольшая страховка
-
-                const url = deleteBtn.getAttribute('href');
+                const url = deleteBtn.getAttribute('data-url');
+                //const url = deleteBtn.getAttribute('href');
                 const fileItem = deleteBtn.closest('.file-item');
                 const fileId = fileItem.getAttribute('data-file-id');
 

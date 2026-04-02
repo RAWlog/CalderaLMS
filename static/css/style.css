@@ -664,3 +664,25 @@ select.dark-input-clean {
     background-position: right 0.75rem center;
     background-size: 16px 12px;
 }
+
+/* Изменяем цвет текста плейсхолдера для полей с классом dark-input-clean */
+.dark-input-clean::placeholder {
+    color: #a0a0a0; /* Светло-серый цвет, можете настроить оттенок под свой дизайн */
+    opacity: 1;     /* Обязательно для Firefox, так как он по умолчанию делает плейсхолдеры полупрозрачными */
+}
+
+/* Опционально: Для браузеров на движке WebKit (Chrome, Safari, Edge) */
+.dark-input-clean::-webkit-input-placeholder {
+    color: #a0a0a0;
+}
+
+/* Опционально: Для старых версий Firefox */
+.dark-input-clean::-moz-placeholder {
+    color: #a0a0a0;
+    opacity: 1;
+}
+
+/* Если хотите, чтобы при фокусе подсказка немного тускнела или меняла цвет: */
+.dark-input-clean:focus::placeholder {
+    color: #6c757d; /* Слегка более тёмный серый при вводе текста (по желанию) */
+}
