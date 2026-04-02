@@ -473,10 +473,9 @@ def setup():
 
 # 2. Главная страница админки
 @app.route('/admin')
-@login_required
 def admin_dashboard():
-    # Проверка, что сюда зашел именно админ
-    if current_user.role != 'admin':
+    # Проверка аутентификации и роли админа
+    if not current_user.is_authenticated or current_user.role != 'admin':
         return "У вас нет доступа к этой странице", 403
         
     mentors = User.query.filter_by(role='mentor').all()
