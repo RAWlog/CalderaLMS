@@ -1,275 +1,127 @@
 {% extends "base.html" %}
-
-
-
 {% block content %}
-
 <div class="container-fluid p-4 p-md-5">
-
     <!-- Шапка страницы -->
-
     <div class="d-flex justify-content-between align-items-end mb-5 animate-fade-in">
-
         <div>
-
             <h5 class="text-white small text-uppercase tracking-widest mb-1">
-
                 {{ mentor.full_name if current_user.role == 'intern' else current_user.full_name }}
-
             </h5>
-
             <h1 class="display-5 fw-bold text-white mb-0">
-
                 {{ 'Курсы наставника' if current_user.role == 'intern' else 'Мои курсы' }} <span class="brand-glow">LMS</span>
-
             </h1>
-
         </div>
-
         <a href="{{ url_for('logout') }}" class="btn-purple btn btn-outline-secondary btn-sm px-4 py-2" style="border-radius: 12px;">
-
         <i class="bi bi-box-arrow-right me-2"></i>Выйти
-
     </a>
-
     </div>
-
-
-
     <div class="row g-4">
-
         <!-- Левая панель: Список курсов -->
-
         <div class="col-md-4 col-lg-4">
-
             {% for course in courses %}
-
             <div class="course-card">
-
                 <div class="course-header" onclick="toggleCourse('course-{{ course.id }}', this)">
-
                     <span class="text-truncate">{{ course.title }}</span>
-
                     <div class="d-flex align-items-center gap-2">
-
                         {% if current_user.role == 'mentor' %}
-
                             <a href="{{ url_for('delete_course', id=course.id) }}" class="text-muted hover-red small me-2" onclick="deleteCourseAjax(event, {{ course.id }}); return false;">
-
                                 <i class="bi bi-trash"></i>
-
                             </a>
-
                         {% endif %}
-
                         <i class="bi bi-chevron-down small"></i>
-
                     </div>
-
                 </div>
-
-                
-
                 <ul id="course-{{ course.id }}" class="topic-list">
-
                     {% for chapter in course.chapters %}
-
                     <li class="topic-item" 
-
                         onclick="selectTopic(this, '{{ chapter.id }}', '{{ chapter.title }}', `{{ chapter.description }}`)">
-
                         <div class="d-flex align-items-center w-100">
-
                             <span class="topic-num"></span>
-
                             <span class="text-truncate me-2">{{ chapter.title }}</span>
-
                         </div>
-
                         {% if current_user.role == 'mentor' %}
-
                             <div class="d-flex align-items-center gap-2">
-
                                 <a href="{{ url_for('delete_chapter', id=chapter.id) }}" class="text-muted hover-red small" onclick="deleteChapterAjax(event, '{{ chapter.id }}')" title="Удалить тему">
-
                                     <i class="bi bi-trash"></i>
-
                                 </a>
-
                                 <i class="bi bi-chevron-right small opacity-50"></i>
-
                             </div>
-
                         {% else %}
-
                             <i class="bi bi-chevron-right small opacity-50"></i>
-
                         {% endif %}
-
                     </li>
-
                     {% endfor %}
-
-
-
                     {% if current_user.role == 'mentor' %}
-
                     <li class="mt-2">
-
                         <form action="{{ url_for('add_chapter', course_id=course.id) }}" method="POST"onsubmit="addChapterAjax(event, {{ course.id }})">
-
                             <button type="submit" class="topic-item add-new-btn w-100 ">
-
                                 <div><span class="topic-num">+</span><span>Новая тема</span></div>
-
                             </button>
-
                         </form>
-
                     </li>
-
                     {% endif %}
-
                 </ul>
-
             </div>
-
             {% endfor %}
-
-
-
             {% if current_user.role == 'mentor' %}
-
             <form onsubmit="createCourseAjax(event)" class="mt-3">
-
                 <div class="input-group-custom">
-
                     <i class="bi bi-plus-circle icon-field"></i>
-
                     <input type="text" name="title" class="dark-input" placeholder="Название курса" required>
-
                     <button class="password-toggle border-0 bg-transparent" type="submit" style="right: 15px;">
-
                         <i class="bi bi-arrow-right-short fs-3 text-white"></i>
-
                     </button>
-
                 </div>
-
             </form>
-
             {% endif %}
-
         </div>
-
-
-
         <!-- Правая панель: Детали темы -->
-
         <div class="col-md-8 col-lg-8">
-
             <!-- Состояние "Не выбрано" -->
-
             <div id="emptyState" class="empty-state">
-
                 <div class="card-icon-wrapper mb-4">
-
                     <i class="bi bi-journal-bookmark-fill"></i>
-
                 </div>
-
                 <h4 class="text-white opacity-50 fw-light">Выберите тему из списка слева</h4>
-
                 <p class="text-white small">Чтобы просмотреть материалы или сдать работу</p>
-
             </div>
-
-
-
             <!-- Основная панель деталей -->
-
             <div id="detailsPanel" class="details-panel shadow-lg">
-
                 <!-- Декоративная линия сверху как в логине -->
-
                 <div class="login-card-edge"></div>
-
-
-
                 <form id="updateForm" method="POST" action="">
-
                     <h1 class="text-center mb-5 fw-bold text-white brand-glow" id="displayTitle">---</h1>
-
-                    
-
                     <div class="field-group">
-
                         <label class="field-label">Название раздела</label>
-
                         {% if current_user.role == 'mentor' %}
-
                             <div class="input-group-custom">
-
                                 <i class="bi bi-pencil-square icon-field"></i>
-
                                 <input type="text" name="title" id="inputTitle" class="dark-input">
-
                             </div>
-
                         {% else %}
-
                             <div class="field-value" id="staticTitle"></div>
-
                         {% endif %}
-
                     </div>
-
-
-
                     <div class="field-group">
-
-                        <label class="field-label">Описание и инструкции</label>
-
+                        <label class="field-label">Описание</label>
                         {% if current_user.role == 'mentor' %}
-
                             <textarea name="description" id="inputDesc" class="dark-input dark-input-clean w-100" rows="5" style="padding-left: 15px !important;"></textarea>
-
                             <div class="text-end mt-3">
-
                                 <button type="submit" class="btn-login" style="width: auto; padding: 10px 25px;">
-
                                     <span>Обновить описание</span>
-
                                 </button>
-
                             </div>
-
                         {% else %}
-
                             <div class="field-value border-0" id="staticDesc" style="white-space: pre-wrap; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px;"></div>
-
                         {% endif %}
-
                     </div>
-
                 </form>
-
-
-
                 <div class="field-group mt-5">
-
                     <label class="field-label mb-3">Прикрепленные материалы</label>
-
                     <div id="filesListContainer">
-
                         <!-- Сюда JS будет рендерить блоки .file-item -->
-
                     </div>
-
                 </div>
-
-
-
                 <!-- Прогрессбар загрузки (НАД зоной загрузки) -->
                 <div id="uploadProgressContainer" class="upload-progress-container" style="display: none; margin-bottom: 15px;">
                     <div class="upload-progress-info">
@@ -280,7 +132,6 @@
                         <div id="uploadProgressBar" class="upload-progress-bar"></div>
                     </div>
                 </div>
-
                 <!-- Зона загрузки -->
                 <form id="uploadForm" method="POST" enctype="multipart/form-data" action="">
                     <div class="upload-area" onclick="document.getElementById('fileInput').click()">
@@ -294,1224 +145,526 @@
                         <input type="file" name="file" id="fileInput" hidden multiple>
                     </div>
                 </form>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
-
-
-
 <!-- Скрипт данных для рендера -->
-
 <script>
-
     const chaptersData = {
-
         {% for course in courses %}
-
             {% for chapter in course.chapters %}
-
                 "{{ chapter.id }}": {
-
                     files: [
-
                         {% for file in chapter.files %}
-
                         {
-
                             id: "{{ file.id }}",
-
                             name: "{{ file.filename }}",
-
                             size: "{{ file.file_size }}",
-
                             role: "{{ file.uploader.role }}",
-
                             uploaderName: "{{ file.uploader.full_name }}",
-
                             downloadUrl: "{{ url_for('download', file_id=file.id) }}",
-
                             deleteUrl: "{{ url_for('delete_file', file_id=file.id) }}",
-
                             canDelete: {{ 'true' if (current_user.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }},
-
                             canDownload: {{ 'true' if (current_user.role == 'mentor' or file.uploader.role == 'mentor' or file.uploader_id == current_user.id) else 'false' }},
-
                             isApproved: {{ 'true' if file.is_approved else 'false' }},
-
                             uploadedAt: "{{ file.upload_date.strftime('%d.%m.%Y %H:%M') if file.upload_date else '' }}"
-
                         },
-
                         {% endfor %}
-
                     ]
-
                 },
-
             {% endfor %}
-
         {% endfor %}
-
     };
-
 </script>
-
 {% endblock %}
-
-
-
 {% block scripts %}
-
 <script>
-
     // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ UI ---
-
     async function createCourseAjax(event) {
-
     event.preventDefault();
-
     const form = event.target;
-
     const formData = new FormData(form);
-
-
-
     try {
-
         const response = await fetch('/create_course', {
-
             method: 'POST',
-
             body: formData
-
         });
-
         const data = await response.json();
-
-
-
         if (data.status === 'success') {
-
             form.querySelector('input[name="title"]').value = '';
-
-
-
             // Генерируем карточку. ВНИМАНИЕ на кавычки и ${data.id}
-
             const courseHTML = `
-
                 <div class="course-card animate-fade-in">
-
                     <div class="course-header" onclick="toggleCourse('course-${data.id}', this)">
-
                         <span class="text-truncate">${data.title}</span>
-
                         <div class="d-flex align-items-center gap-2">
-
                             <a href="/delete_course/${data.id}" 
-
                                class="text-muted hover-red small" 
-
                                onclick="deleteCourseAjax(event, ${data.id})">
-
                                 <i class="bi bi-trash"></i>
-
                             </a>
-
                             <i class="bi bi-chevron-down small"></i>
-
                         </div>
-
                     </div>
-
-                    
-
                     <ul id="course-${data.id}" class="topic-list">
-
                         <li class="mt-2">
-
                             <form action="/add_chapter/${data.id}" method="POST" onsubmit="addChapterAjax(event, ${data.id})">
-
                                 <button type="submit" class="topic-item add-new-btn w-100">
-
                                     <div><span class="topic-num">+</span><span>Новая тема</span></div>
-
                                 </button>
-
                             </form>
-
                         </li>
-
                     </ul>
-
                 </div>
-
             `;
-
-            
-
             // Вставляем перед формой создания (или в начало списка)
-
             form.insertAdjacentHTML('beforebegin', courseHTML);
-
-            
-
         }
-
     } catch (e) { console.error(e); }
-
 }
-
-
-
     async function deleteCourseAjax(event, courseId) {
-
     // 1. Останавливаем переход по ссылке и всплытие (чтобы аккордеон не закрывался)
-
     event.preventDefault();
-
     event.stopPropagation();
-
-
-
     // 2. Спрашиваем подтверждение
-
     if (!confirm('Точно удалить этот курс со всеми материалами?')) return;
-
-
-
     const url = event.currentTarget.getAttribute('href');
-
-
-
     try {
-
         // 3. Отправляем запрос на сервер
-
         const response = await fetch(url, {
-
             method: 'POST', // или GET, смотря что в роуте, но POST надежнее
-
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
-
         });
-
         const data = await response.json();
-
-
-
         if (data.status === 'success') {
-
             // 4. Находим карточку курса
-
             // Мы ищем ближайший родительский элемент с классом .course-card
-
             const courseCard = event.target.closest('.course-card');
-
-            
-
             if (courseCard) {
-
                 // Добавляем эффект исчезновения (у тебя уже есть анимации в стиле)
-
                 courseCard.style.transition = 'all 0.4s ease';
-
                 courseCard.style.opacity = '0';
-
                 courseCard.style.transform = 'translateX(20px)';
-
-                
-
                 // Удаляем из документа после завершения анимации
-
                 setTimeout(() => {
-
                     courseCard.remove();
-
-                    
-
                     // Если удалили активный курс, который сейчас открыт справа — очищаем правую панель
-
                     const detailsPanel = document.getElementById('detailsPanel');
-
                     if (detailsPanel.style.display === 'block') {
-
                         // Тут можно либо скрыть панель, либо проверить, относится ли она к удаленному курсу
-
                         // Для простоты — если список тем пуст, показываем emptyState
-
                         document.getElementById('emptyState').style.display = 'flex';
-
                         detailsPanel.style.display = 'none';
-
                     }
-
                 }, 400);
-
             }
-
         } else {
-
             alert('Ошибка: ' + (data.msg || 'Не удалось удалить курс'));
-
         }
-
     } catch (error) {
-
         console.error('Ошибка при удалении:', error);
-
         alert('Связь с сервером потеряна');
-
     }
-
 }
-
-
-
     function toggleCourse(listId, header) {
-
         const list = document.getElementById(listId);
-
         header.classList.toggle('open');
-
         list.classList.toggle('show');
-
     }
-
-
-
     // Храним текущий ID темы глобально, чтобы обновлять список файлов
-
     let currentTopicId = null;
-
-
-
     function selectTopic(el, id, title, desc) {
-
         currentTopicId = id;
-
-
-
         // 1. Подсветка активного элемента
-
         document.querySelectorAll('.topic-item').forEach(i => i.classList.remove('active'));
-
         el.classList.add('active');
-
-        
-
         // 2. Показать панель
-
         document.getElementById('emptyState').style.display = 'none';
-
         document.getElementById('detailsPanel').style.display = 'block';
-
-
-
         // 3. Заполнить данные формы (Текст)
-
         if(document.getElementById('inputTitle')) {
-
             document.getElementById('inputTitle').value = title;
-
             document.getElementById('inputDesc').value = desc;
-
-            
-
             // Настраиваем форму на AJAX отправку
-
             const updateForm = document.getElementById('updateForm');
-
             updateForm.onsubmit = (e) => submitUpdate(e, id);
-
         } else {
-
             // Режим просмотра (стажер)
-
             document.getElementById('staticTitle').innerText = title;
-
             document.getElementById('staticDesc').innerText = desc;
-
         }
-
-        
-
         document.getElementById('displayTitle').innerText = title;
-
-
-
         // 4. Настроить форму загрузки файлов
-
         const uploadForm = document.getElementById('uploadForm');
-
         // Очищаем старый input, чтобы onchange срабатывал даже при выборе того же файла
-
         document.getElementById('fileInput').value = ''; 
-
         uploadForm.onchange = (e) => submitUpload(e, id);
-
-
-
         // Настраиваем drag-and-drop
-
         const uploadArea = uploadForm.querySelector('.upload-area');
-
-        
-
         uploadArea.addEventListener('dragover', (e) => {
-
             e.preventDefault();
-
             e.stopPropagation();
-
             uploadArea.classList.add('drag-active');
-
         });
-
-        
-
         uploadArea.addEventListener('dragleave', (e) => {
-
             e.preventDefault();
-
             e.stopPropagation();
-
             uploadArea.classList.remove('drag-active');
-
         });
-
-        
-
         uploadArea.addEventListener('drop', (e) => {
-
             e.preventDefault();
-
             e.stopPropagation();
-
             uploadArea.classList.remove('drag-active');
-
-            
-
             const files = e.dataTransfer.files;
-
             if (files.length > 0) {
-
                 const fileInput = document.getElementById('fileInput');
-
                 fileInput.files = files;
-
                 // Вызываем загрузку
-
                 submitUpload({ target: uploadForm }, id);
-
             }
-
         });
-
-
-
         // 5. Рендер файлов из JS-объекта (кэш)
-
         renderFiles(id);
-
     }
-
-
-
     function renderFiles(topicId) {
-
         const container = document.getElementById('filesListContainer');
-
         container.innerHTML = '';
-
         const files = chaptersData[topicId]?.files || [];
-
-
-
         if (files.length === 0) {
-
             container.innerHTML = '<div class="text-white small">Файлов нет</div>';
-
             return;
-
         }
-
-
-
         files.forEach(file => {
-
             appendFileToDOM(file);
-
         });
-
     }
-
-
-
     function appendFileToDOM(file) {
-
         const container = document.getElementById('filesListContainer');
-
         if (container.innerHTML.includes('Файлов нет')) container.innerHTML = '';
-
-
-
         let icon = 'bi-file-earmark-text';
-
         if(file.name.includes('.doc')) icon = 'bi-file-earmark-word';
-
         if(file.name.includes('.pdf')) icon = 'bi-file-earmark-pdf';
-
         if(file.name.includes('.png') || file.name.includes('.jpg')) icon = 'bi-file-earmark-image';
-
-
-
         let badge = '';
-
         if (file.role === 'intern') {
-
             badge = `<span class="badge bg-secondary ms-2 small">От: ${file.uploaderName}</span>`;
-
         }
-
-
-
         // Генерируем ссылку или "заглушку"
-
         let downloadElement = '';
-
         if (file.canDownload) {
-
             downloadElement = `<a href="${file.downloadUrl}" class="text-decoration-none text-white fw-medium file-item-name">${file.name}</a>`;
-
         } else {
-
             downloadElement = `<span class="text-secondary fw-medium file-item-name">${file.name} <i class="bi bi-lock-fill small ms-1" title="Чужое ДЗ"></i></span>`;
-
         }
-
-
-
         // Логика галочки: 
-
         const currentUserRole = "{{ current_user.role }}"; // Узнаем роль того, кто смотрит в экран
-
         let approveElement = '';
-
-
-
         if (file.isApproved) {
-
             // Если уже проверено — показываем красивый зеленый статус
-
             approveElement = `<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 ms-3" title="Работа принята"><i class="bi bi-check2-all"></i> Принято</span>`;
-
         } else if (currentUserRole === 'mentor' && file.role === 'intern') {
-
             // Если не проверено, и смотрит наставник на файл стажера — показываем кнопку
-
             approveElement = `<button class="btn btn-sm text-success approve-file-btn ms-2 p-0 px-2" data-file-id="${file.id}" title="Отметить как проверенное"><i class="bi bi-check-circle fs-5 hover-success-icon"></i></button>`;
-
         }
-
-
-
         const html = `
-
             <div class="file-item animate-fade-in d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3 p-3 mb-3" data-file-id="${file.id}">
-
-            
-
             <!-- Основной блок с файлом (Иконка + Инфо) -->
-
             <div class="d-flex align-items-start align-items-sm-center w-100" style="min-width: 0;">
-
                 <!-- Иконка вынесена в отдельный блок, чтобы не сжималась -->
-
                 <div class="me-3 fs-3 mt-1 mt-sm-0 flex-shrink-0">
-
                     <i class="bi ${icon} file-icon ${file.canDownload ? '' : 'text-secondary'}"></i>
-
                 </div>
-
-                
-
                 <!-- Контейнер с текстом (min-width: 0 спасает от разрыва контейнера длинным текстом) -->
-
                 <div class="flex-grow-1" style="min-width: 0;">
-
                     <div class="d-block w-100 mb-1">
-
                         ${downloadElement}
-
                     </div>
-
-                    
-
                     <!-- Бейджики и размер аккуратно переносятся на новую строку, если не влезают -->
-
                     <div class="d-flex flex-wrap align-items-center gap-2">
-
                         <span class="small text-secondary">${file.size}</span>
-
                         ${badge}
-
                         ${approveElement}
-
                     </div>
-
                 </div>
-
             </div>
-
-
-
             <!-- Мета-информация (Дата + Кнопка удаления) -->
-
             <div class="d-flex align-items-center justify-content-end w-100" style="border-top-width: 1px;">
-
                 <span class="text-white small" style="font-size: 0.85rem; opacity: 0.7;">
-
                     ${file.uploadedAt}
-
                 </span>
-
                 ${file.canDelete ? `<a href="#" data-url="${file.deleteUrl}" class="text-secondary hover-red delete-file-btn ms-3"><i class="bi bi-x-lg fs-5"></i></a>` : ''}
-
             </div>
-
-            
-
         </div>
-
         `;
-
         container.insertAdjacentHTML('beforeend', html);
-
     }
-
-
-
     // --- AJAX ФУНКЦИИ ---
-
-
-
     // 1. Обновление текста (без перезагрузки)
-
     async function submitUpdate(e, id) {
-
         e.preventDefault(); // Остановить перезагрузку страницы!
-
         const form = e.target;
-
         const formData = new FormData(form);
-
         const btn = form.querySelector('button[type="submit"]');
-
         const span = btn.querySelector('span') || btn; 
-
         const originalText = span.innerText;
-
         span.innerText = "Сохранение...";
-
-
-
         try {
-
             const response = await fetch(`/update_chapter/${id}`, {
-
                 method: 'POST',
-
                 body: formData
-
             });
-
             const data = await response.json();
-
-            
-
             if (data.status === 'success') {
-
                 document.getElementById('displayTitle').innerText = data.title;
-
                 const activeItem = document.querySelector('.topic-item.active .text-truncate');
-
                 if(activeItem) activeItem.innerText = data.title;
-
-                
-
                 span.innerText = "Сохранено!";
-
                 // Меняем цвет фона инлайном, не трогая классы из style.css
-
                 btn.style.backgroundColor = "rgba(25, 135, 84, 0.2)"; // Полупрозрачный зеленый
-
                 btn.style.borderColor = "#198754";
-
                 btn.style.color = "#20c997";
-
-                
-
                 setTimeout(() => {
-
                     span.innerText = originalText;
-
                     // Возвращаем как было
-
                     btn.style.backgroundColor = "";
-
                     btn.style.borderColor = "";
-
                     btn.style.color = "";
-
                 }, 2000);
-
             } else {
-
                 alert('Ошибка сервера: ' + (data.msg || 'Не удалось создать тему'));
-
             }
-
         } catch (error) {
-
             console.error('Ошибка:', error);
-
             alert('Ошибка сохранения');
-
         }
-
     }
-
-
-
     // 2. Загрузка файла (без перезагрузки) с прогрессбаром
-
     function submitUpload(e, id) {
-
         const input = e.target.querySelector('input[type="file"]') || e.target;
-
         if (!input.files.length) return;
-
-
-
         const file = input.files[0]; // Первый файл для прогресса
-
         const formData = new FormData();
-
         for (let i = 0; i < input.files.length; i++) {
-
             formData.append('file', input.files[i]);
-
         }
-
-
-
         // Показываем прогрессбар
-
         const progressContainer = document.getElementById('uploadProgressContainer');
-
         const progressBar = document.getElementById('uploadProgressBar');
-
         const progressPercent = document.getElementById('uploadPercent');
-
         const fileName = document.getElementById('uploadFileName');
-
-        
-
         progressContainer.style.display = 'block';
-
         fileName.textContent = file.name;
-
         progressBar.style.width = '0%';
-
         progressPercent.textContent = '0%';
-
-
-
         // Используем XMLHttpRequest для отслеживания прогресса
-
         const xhr = new XMLHttpRequest();
-
-        
-
         xhr.upload.addEventListener('progress', (e) => {
-
             if (e.lengthComputable) {
-
                 const percentComplete = Math.round((e.loaded / e.total) * 100);
-
                 progressBar.style.width = percentComplete + '%';
-
                 progressPercent.textContent = percentComplete + '%';
-
             }
-
         });
-
-        
-
         xhr.addEventListener('load', () => {
-
             if (xhr.status === 200) {
-
                 try {
-
                     const data = JSON.parse(xhr.responseText);
-
-                    
-
                     if (data.status === 'success') {
-
                         // Сбрасываем input для возможности повторной загрузки того же файла
                         document.getElementById('fileInput').value = '';
-
                         // Скрываем прогрессбар
-
                         setTimeout(() => {
-
                             progressContainer.style.display = 'none';
-
                         }, 500);
-
-                        
-
                         // Добавляем файлы
-
                         if (!chaptersData[id]) chaptersData[id] = { files: [] };
-
                         data.files.forEach(file => {
-
                             chaptersData[id].files.push(file);
-
                             appendFileToDOM(file);
-
                         });
-
                     } else {
-
                         progressContainer.style.display = 'none';
-
                         alert('Ошибка загрузки: ' + (data.msg || 'Неизвестная ошибка'));
-
                     }
-
                 } catch (err) {
-
                     progressContainer.style.display = 'none';
-
                     console.error(err);
-
                     alert('Ошибка обработки ответа');
-
                 }
-
             } else {
-
                 progressContainer.style.display = 'none';
-
                 alert('Ошибка сервера: ' + xhr.status);
-
             }
-
         });
-
-        
-
         xhr.addEventListener('error', () => {
-
             progressContainer.style.display = 'none';
-
             alert('Ошибка сети при загрузке');
-
         });
-
-        
-
         xhr.open('POST', `/upload_file/${id}`);
-
         xhr.send(formData);
-
     }
-
-
-
     // 3. Добавление новой темы (универсальная функция)
-
     async function addChapterAjax(event, courseId) {
-
         event.preventDefault(); // Останавливаем перезагрузку страницы!
-
-        
-
         const form = event.target;
-
-        
-
         try {
-
             const response = await fetch(form.action, { method: 'POST' });
-
             const data = await response.json();
-
-
-
             if (data.status === 'success') {
-
                 // Создаем HTML нового элемента
-
                 const li = document.createElement('li');
-
                 li.className = 'topic-item animate-fade-in';
-
-                
-
                 // Вставляем логику onclick с новыми данными
-
                 li.onclick = function() {
-
                     selectTopic(this, data.id, data.title, data.description);
-
                 };
-
-                
-
                 li.innerHTML = `
-
                     <div class="d-flex align-items-center w-100">
-
                         <span class="topic-num"></span> <!-- CSS сам вставит сюда правильный номер -->
-
                         <span class="text-truncate me-2">${data.title}</span>
-
                     </div>
-
                     <div class="d-flex align-items-center gap-2">
-
                         <a href="/delete_chapter/${data.id}" 
-
                         class="text-muted hover-red small" 
-
                         onclick="deleteChapterAjax(event, '${data.id}')" 
-
                         title="Удалить тему">
-
                             <i class="bi bi-trash"></i>
-
                         </a>
-
                         <i class="bi bi-chevron-right small opacity-50"></i>
-
                     </div>
-
                 `;
-
-                
-
                 // Вставляем ПЕРЕД кнопкой добавления (которая лежит в последнем li)
-
                 const ul = form.closest('ul');
-
                 const lastLi = ul.lastElementChild; 
-
                 ul.insertBefore(li, lastLi);
-
-                
-
                 // Сразу открываем новую тему
-
                 li.click();
-
             } else {
-
                 alert('Ошибка сервера: ' + (data.msg || 'Не удалось создать тему'));
-
             }
-
         } catch(err) {
-
             console.error('Ошибка добавления темы:', err);
-
         }
-
     }
-
-
-
     async function deleteChapterAjax(event, chapterId) {
-
     // 1. Останавливаем переход и выбор темы
-
     event.preventDefault();
-
     event.stopPropagation();
-
-
-
     // 2. Подтверждение
-
     if (!confirm('Удалить эту тему со всеми вложенными файлами?')) return;
-
-
-
     const url = event.currentTarget.getAttribute('href');
-
-
-
     try {
-
         const response = await fetch(url, {
-
             method: 'POST',
-
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
-
         });
-
         const data = await response.json();
-
-
-
         if (data.status === 'success') {
-
             // 3. Находим элемент списка темы
-
             const chapterItem = event.target.closest('.topic-item');
-
-            
-
             if (chapterItem) {
-
                 // Анимация исчезновения
-
                 chapterItem.style.transition = 'all 0.3s ease';
-
                 chapterItem.style.opacity = '0';
-
                 chapterItem.style.transform = 'translateX(-20px)';
-
-                
-
                 setTimeout(() => {
-
                     chapterItem.remove();
-
-                    
-
                     // 4. Если мы удалили тему, которая сейчас открыта справа — закрываем панель
-
                     if (currentTopicId == chapterId) {
-
                         document.getElementById('emptyState').style.display = 'flex';
-
                         document.getElementById('detailsPanel').style.display = 'none';
-
                         currentTopicId = null;
-
                     }
-
                 }, 300);
-
             }
-
         } else {
-
             alert('Ошибка: ' + (data.msg || 'Не удалось удалить тему'));
-
         }
-
     } catch (error) {
-
         console.error('Ошибка при удалении темы:', error);
-
     }
-
 }
-
-
-
     document.addEventListener('click', function(e) {
-
             const deleteBtn = e.target.closest('.delete-file-btn');
-
             if (deleteBtn) {
-
                 e.preventDefault(); 
-
                 if (!confirm('Удалить этот файл?')) return; // Небольшая страховка
-
                 const url = deleteBtn.getAttribute('data-url');
-
                 //const url = deleteBtn.getAttribute('href');
-
                 const fileItem = deleteBtn.closest('.file-item');
-
                 const fileId = fileItem.getAttribute('data-file-id');
-
-
-
                 fetch(url, {
-
                     method: 'POST', 
-
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
-
                 })
-
                 .then(response => response.json())
-
                 .then(data => {
-
                     if (data.status === 'success') {
-
                         // 1. Удаляем из DOM
-
                         fileItem.style.transition = 'opacity 0.3s ease';
-
                         fileItem.style.opacity = '0';
-
                         setTimeout(() => {
-
                             fileItem.remove();
-
                             // Если файлов больше нет, пишем "Файлов нет"
-
                             if (document.getElementById('filesListContainer').children.length === 0) {
-
                                 document.getElementById('filesListContainer').innerHTML = '<div class="text-muted small">Файлов нет</div>';
-
                             }
-
                         }, 300);
-
-
-
                         // 2. ВАЖНО: Удаляем из локального кэша chaptersData
-
                         if (currentTopicId && chaptersData[currentTopicId]) {
-
                             chaptersData[currentTopicId].files = chaptersData[currentTopicId].files.filter(f => f.id != fileId);
-
                         }
-
                     } else {
-
                         alert('Ошибка: ' + data.msg);
-
                     }
-
                 })
-
                 .catch(error => console.error('Ошибка:', error));
-
             }
-
         });
-
-
-
         // Обработка клика по кнопке "Принять работу"
-
     document.addEventListener('click', function(e) {
-
         const approveBtn = e.target.closest('.approve-file-btn');
-
-        
-
         if (approveBtn) {
-
             e.preventDefault();
-
             const fileId = approveBtn.getAttribute('data-file-id');
-
             const fileItem = approveBtn.closest('.file-item'); // находим весь блок файла
-
-            
-
             // Заменяем иконку на спиннер загрузки, пока идет запрос
-
             approveBtn.innerHTML = `<div class="spinner-border spinner-border-sm text-success" role="status"></div>`;
-
-            
-
             fetch(`/approve_file/${fileId}`, {
-
                 method: 'POST'
-
             })
-
             .then(response => response.json())
-
             .then(data => {
-
                 if (data.status === 'success') {
-
                     // Если сервер подтвердил, превращаем кнопку в зеленый бейджик
-
                     const successBadge = document.createElement('span');
-
                     successBadge.className = 'badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 ms-3 animate-fade-in';
-
                     successBadge.innerHTML = '<i class="bi bi-check2-all"></i> Принято';
-
-                    
-
                     // Плавно заменяем элемент
-
                     approveBtn.replaceWith(successBadge);
-
                 } else {
-
                     alert('Ошибка: ' + data.msg);
-
                     approveBtn.innerHTML = `<i class="bi bi-check-circle fs-5"></i>`; // Возвращаем иконку при ошибке
-
                 }
-
             })
-
             .catch(error => {
-
                 console.error("Ошибка сети:", error);
-
                 approveBtn.innerHTML = `<i class="bi bi-check-circle fs-5"></i>`;
-
             });
-
         }
-
     });
-
-
-
 </script>
-
 <style>
-
     /* Анимация появления для плавности */
-
     .animate-fade-in {
-
         animation: fadeIn 0.5s;
-
     }
-
     @keyframes fadeIn {
-
         from { opacity: 0; transform: translateY(5px); }
-
         to { opacity: 1; transform: translateY(0); }
-
     }
-
-    
-
     /* Визуальная обратная связь при drag-and-drop */
-
     .upload-area.drag-active {
         border-color: #4f4bff !important;
         background: rgba(79, 75, 255, 0.15) !important;
@@ -1519,115 +672,53 @@
         transform: scale(1.02);
         transition: all 0.2s ease;
     }
-
-    
-
     /* Прогрессбар загрузки */
-
     .upload-progress-container {
-
         margin-top: 15px;
-
         padding: 15px;
-
         background: var(--bg-surface, #1c1c1e);
-
         border-radius: 12px;
-
         border: 1px solid var(--border-color, #333);
-
     }
-
-    
-
     .upload-progress-info {
-
         display: flex;
-
         justify-content: space-between;
-
         align-items: center;
-
         margin-bottom: 10px;
-
         font-size: 0.85rem;
-
     }
-
-    
-
     .upload-file-name {
-
         color: var(--text-muted, #bbbbbb);
-
         overflow-wrap: break-word;
-
         word-break: break-word;
-
         max-width: 70%;
-
     }
-
-    
-
     .upload-percent {
-
         color: #4f4bff;
-
         font-weight: 600;
-
         text-shadow: 0 0 10px rgba(79, 75, 255, 0.5);
-
     }
-
-    
-
     .upload-progress-bar-bg {
-
         height: 6px;
-
         background: rgba(255, 255, 255, 0.1);
-
         border-radius: 3px;
-
         overflow: hidden;
-
     }
-
-    
-
     .upload-progress-bar {
-
         height: 100%;
-
         width: 0%;
-
         background: linear-gradient(90deg, #4f4bff, #6b66ff);
-
         border-radius: 3px;
-
         transition: width 0.2s ease;
-
         box-shadow: 0 0 10px rgba(79, 75, 255, 0.5);
-
     }
-
     /* Название файла в списке - перенос на мобильных */
-
     .file-item-name {
-
         display: block;
-
         overflow-wrap: break-word;
-
         word-break: break-word;
-
         max-width: 100%;
-
         line-height: 1.4;
-
     }
-
 </style>
-
 {% endblock %}

@@ -9,6 +9,58 @@
     --border-color: #333;
 }
 
+/* Light Theme Variables */
+[data-theme="light"] {
+    --bg-body: #f5f5f7;         /* Светлый фон */
+    --bg-surface: #ffffff;      /* Белые карточки */
+    --bg-element: #f0f0f2;      /* Светло-серый для элементов */
+    --primary-glow: #4f4bff;    /* Сохраняем синий акцент */
+    --text-main: #1a1a1a;       /* Тёмный текст */
+    --text-muted: #666666;      /* Серый текст */
+    --border-color: #e0e0e0;    /* Светлая граница */
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg-surface);
+    color: var(--text-main);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .theme-toggle-btn {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .theme-toggle-btn:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Smooth transitions for theme switching */
+body, .course-card, .topic-item, .details-panel, .file-item, 
+.upload-area, .dark-input, .btn-login, .theme-toggle-btn {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
 body {
     background-color: var(--bg-body);
     color: var(--text-main);
@@ -323,9 +375,6 @@ body {
 }
 
 
-
-
-
 /* --- Главная страница (Выбор роли) --- */
 
 /* Свечение для текста Caldera */
@@ -365,7 +414,6 @@ body {
     transform: scaleX(0);
     transition: transform 0.4s ease;
 }
-
 
 /* 1. Эффекты при наведении на саму карточку (чуть подправил тени) */
 .role-card:hover {
@@ -414,9 +462,6 @@ body {
     transform: scale(1.1) rotate(5deg);
     box-shadow: 0 0 20px rgba(79, 75, 255, 0.4);
 }
-
-
-
 
 /* --- Страница Логина --- */
 
@@ -576,57 +621,56 @@ input::-webkit-credentials-auto-fill-button {
 }
 
 /* Стили специально для админки, чтобы всё отобразилось */
-    .admin-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        padding: 25px;
-        transition: all 0.3s ease;
-    }
+.admin-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 25px;
+    transition: all 0.3s ease;
+}
 
-    .dark-input-clean {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        color: white !important;
-        border-radius: 12px !important;
-        padding: 12px 15px !important;
-    }
+.dark-input-clean {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border-radius: 12px !important;
+    padding: 12px 15px !important;
+}
 
-    .dark-input-clean:focus {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border-color: rgba(255, 255, 255, 0.3) !important;
-        box-shadow: none !important;
-    }
+.dark-input-clean:focus {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: none !important;
+}
 
-    .field-label {
-        color: #888;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-        display: block;
-    }
+.field-label {
+    color: #888;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: block;
+}
 
-    .hover-red:hover {
-        color: #ff4d4d !important;
-    }
+.hover-red:hover {
+    color: #ff4d4d !important;
+}
 
-    .topic-item {
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 12px;
-        padding: 12px 15px;
-        margin-bottom: 10px;
-        border: 1px solid transparent;
-    }
+.topic-item {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+}
 
-    .topic-item:hover {
-        border-color: rgba(255, 255, 255, 0.1);
-    }
+.topic-item:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+}
 
-    .hover-success-icon:hover { color: #198754 !important; transform: scale(1.1); transition: 0.2s; }
+.hover-success-icon:hover { color: #198754 !important; transform: scale(1.1); transition: 0.2s; }
 
-    
 /* Делаем иконку мусорки видимой сразу */
 .bi-trash {
     color: rgba(255, 255, 255, 0.5); /* Белый на 50% прозрачности */
@@ -1223,3 +1267,381 @@ select.dark-input-clean {
         width: 90%;
     }
 }
+
+/* ========================================
+   LIGHT THEME OVERRIDES
+   ======================================== */
+
+/* Scrollbar for light theme */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: #ccc;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: #4f4bff;
+}
+
+/* Topic item hover in light theme */
+[data-theme="light"] .topic-item:hover {
+    background-color: var(--bg-element);
+    color: var(--text-main);
+}
+
+/* Add new button in light theme */
+[data-theme="light"] .add-new-btn {
+    border: 1px dashed rgba(0, 0, 0, 0.3);
+    color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .add-new-btn:hover {
+    border-color: var(--primary-glow);
+    color: var(--primary-glow);
+    background-color: rgba(79, 75, 255, 0.05);
+}
+
+/* Empty state in light theme */
+[data-theme="light"] .empty-state {
+    color: #999;
+}
+
+/* Field label and value in light theme */
+[data-theme="light"] .field-label {
+    color: #666;
+}
+
+[data-theme="light"] .field-value {
+    border-bottom: 1px solid #ddd;
+    color: #333;
+}
+
+/* Upload area in light theme */
+[data-theme="light"] .upload-area {
+    background-color: #f0f0f2;
+}
+
+[data-theme="light"] .upload-area:hover {
+    background-color: #e8e8ea;
+}
+
+[data-theme="light"] .plus-icon {
+    color: #999;
+}
+
+/* File item in light theme */
+[data-theme="light"] .file-item {
+    border: 1px solid #e0e0e0;
+}
+
+[data-theme="light"] .file-icon {
+    color: #666;
+}
+
+/* Login card in light theme */
+[data-theme="light"] .login-card {
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .login-card .text-muted,
+[data-theme="light"] .login-card .text-secondary {
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Inputs in light theme */
+[data-theme="light"] .dark-input {
+    background: #f5f5f7;
+    border-color: #ddd;
+    color: #1a1a1a !important;
+}
+
+[data-theme="light"] .dark-input:focus {
+    background: #ffffff;
+    border-color: var(--primary-glow);
+    box-shadow: 0 0 15px rgba(79, 75, 255, 0.2);
+}
+
+[data-theme="light"] .dark-input::placeholder {
+    color: #999;
+}
+
+[data-theme="light"] .icon-field {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .dark-input:focus + .icon-field,
+[data-theme="light"] .input-group-custom:focus-within .icon-field {
+    color: var(--primary-glow);
+}
+
+/* Password toggle in light theme */
+[data-theme="light"] .password-toggle {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .password-toggle:hover {
+    color: #1a1a1a;
+}
+
+/* Checkbox wrapper in light theme */
+[data-theme="light"] .checkbox-wrapper {
+    color: rgba(0, 0, 0, 0.6);
+}
+
+/* Role card in light theme */
+[data-theme="light"] .role-card:hover {
+    background-color: #f8f8fa;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 0 35px rgba(79, 75, 255, 0.1);
+}
+
+[data-theme="light"] .role-card .text-muted {
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="light"] .role-card:hover .text-muted {
+    color: #1a1a1a !important;
+    text-shadow: none;
+}
+
+/* Trash icon in light theme */
+[data-theme="light"] .bi-trash {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .bi-trash:hover {
+    color: #ff4d4d !important;
+}
+
+/* Admin card in light theme */
+[data-theme="light"] .admin-card {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Dark input clean in light theme */
+[data-theme="light"] .dark-input-clean {
+    background-color: #f5f5f7 !important;
+    border: 1px solid #ddd !important;
+    color: #1a1a1a !important;
+}
+
+[data-theme="light"] .dark-input-clean:focus {
+    background-color: #ffffff !important;
+    border-color: #bbb !important;
+}
+
+[data-theme="light"] .dark-input-clean option {
+    background-color: #ffffff;
+    color: #1a1a1a;
+}
+
+[data-theme="light"] select.dark-input-clean {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%231a1a1a' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+[data-theme="light"] .dark-input-clean::placeholder {
+    color: #888;
+}
+
+/* Modal in light theme */
+[data-theme="light"] .upload-modal-backdrop {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="light"] .upload-modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .upload-modal-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .upload-file-item {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .upload-progress-bar-bg {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .upload-stats-details span {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Topic item active in light theme */
+[data-theme="light"] .topic-item.active {
+    box-shadow: 0 0 15px rgba(79, 75, 255, 0.2), inset 0 0 10px rgba(79, 75, 255, 0.05);
+}
+
+/* Fix white text on light background */
+[data-theme="light"] .text-white {
+    color: var(--text-main) !important;
+}
+
+[data-theme="light"] .text-white small,
+[data-theme="light"] .text-white .small {
+    color: var(--text-muted) !important;
+}
+
+/* Fix file item date text in light theme */
+[data-theme="light"] .file-item .text-white {
+    color: var(--text-main) !important;
+    opacity: 0.8;
+}
+
+/* Fix file download link in light theme */
+[data-theme="light"] .file-item .text-white.file-item-name,
+[data-theme="light"] .file-item a.text-white {
+    color: var(--text-main) !important;
+}
+
+/* Fix upload area text in light theme */
+[data-theme="light"] .upload-area .text-white,
+[data-theme="light"] .upload-area .text-secondary {
+    color: var(--text-muted) !important;
+}
+
+/* Fix brand glow text in light theme */
+[data-theme="light"] .brand-glow {
+    text-shadow: 0 0 25px rgba(79, 75, 255, 0.3);
+}
+
+/* Fix display headings in light theme */
+[data-theme="light"] h1.text-white,
+[data-theme="light"] h2.text-white,
+[data-theme="light"] h3.text-white,
+[data-theme="light"] h4.text-white,
+[data-theme="light"] h5.text-white,
+[data-theme="light"] h6.text-white,
+[data-theme="light"] .display-5.text-white,
+[data-theme="light"] .display-6.text-white {
+    color: var(--text-main) !important;
+}
+
+/* Fix details panel text in light theme */
+[data-theme="light"] .details-panel .text-white,
+[data-theme="light"] .details-panel h2,
+[data-theme="light"] .details-panel h3,
+[data-theme="light"] .details-panel h4 {
+    color: var(--text-main) !important;
+}
+
+/* Fix file item name/link in light theme */
+[data-theme="light"] .file-item a.file-item-name,
+[data-theme="light"] .file-item .file-item-name {
+    color: var(--text-main) !important;
+}
+
+[data-theme="light"] .file-item a.file-item-name:hover {
+    color: var(--primary-glow) !important;
+}
+
+/* Fix upload area text in light theme */
+[data-theme="light"] .upload-area {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .upload-area .plus-icon {
+    color: #666;
+}
+
+/* Fix back-link visibility in light theme */
+[data-theme="light"] .back-link {
+    color: rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="light"] .back-link:hover {
+    color: var(--text-main) !important;
+}
+
+/* Admin panel light theme fixes */
+[data-theme="light"] .admin-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .admin-card-title,
+[data-theme="light"] .admin-list-header {
+    color: var(--text-main) !important;
+}
+
+[data-theme="light"] .admin-user-item {
+    background: var(--bg-element);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .admin-user-item:hover {
+    background: #e8e8ec;
+    border-color: #d0d0d5;
+}
+
+[data-theme="light"] .admin-user-name {
+    color: var(--text-main) !important;
+}
+
+[data-theme="light"] h1.text-white,
+[data-theme="light"] h1.display-5.fw-bold {
+    color: var(--text-main) !important;
+}
+
+/* Textarea in light theme */
+[data-theme="light"] textarea.dark-input,
+[data-theme="light"] textarea.dark-input-clean {
+    background: var(--bg-element) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+[data-theme="light"] textarea.dark-input:focus,
+[data-theme="light"] textarea.dark-input-clean:focus {
+    background: #ffffff !important;
+    border-color: var(--primary-glow) !important;
+}
+
+/* Description panel styling in light theme */
+[data-theme="light"] .details-panel .mb-4 {
+    background: var(--bg-element);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .details-panel .mb-4 textarea {
+    background: #ffffff !important;
+    border: 1px solid #e0e0e0 !important;
+}
+
+/* Topic items more visible in light theme */
+[data-theme="light"] .topic-item {
+    background: var(--bg-element);
+    border: 1px solid var(--border-color);
+    margin-bottom: 6px;
+}
+
+[data-theme="light"] .topic-item:hover {
+    background: #e8e8ec;
+    border-color: #d0d0d5;
+}
+
+[data-theme="light"] .topic-item.active {
+    background: #ffffff;
+    border-color: var(--primary-glow);
+    box-shadow: 0 2px 8px rgba(79, 75, 255, 0.15);
+}
+
+/* Static description field in light theme */
+[data-theme="light"] #staticDesc {
+    background: var(--bg-element) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+/* Modal body scrollbar in light theme */
+[data-theme="light"] .upload-modal-body::-webkit-scrollbar-thumb {
+    background: #ccc;
+}
+
+[data-theme="light"] .upload-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #4f4bff;
+}
+
