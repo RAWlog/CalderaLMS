@@ -54,7 +54,7 @@
 
                         {% if current_user.role == 'mentor' %}
 
-                            <a href="{{ url_for('delete_course', id=course.id) }}" class="text-muted hover-red small" onclick="deleteCourseAjax(event, {{ course.id }}); return false;">
+                            <a href="{{ url_for('delete_course', id=course.id) }}" class="text-muted hover-red small me-2" onclick="deleteCourseAjax(event, {{ course.id }}); return false;">
 
                                 <i class="bi bi-trash"></i>
 
@@ -88,15 +88,23 @@
 
                         {% if current_user.role == 'mentor' %}
 
-                            <a href="{{ url_for('delete_chapter', id=chapter.id) }}" class="text-muted hover-red small me-3" onclick="deleteChapterAjax(event, '{{ chapter.id }}')" title="Удалить тему">
+                            <div class="d-flex align-items-center gap-2">
 
-                                <i class="bi bi-trash"></i>
+                                <a href="{{ url_for('delete_chapter', id=chapter.id) }}" class="text-muted hover-red small" onclick="deleteChapterAjax(event, '{{ chapter.id }}')" title="Удалить тему">
 
-                            </a>
+                                    <i class="bi bi-trash"></i>
+
+                                </a>
+
+                                <i class="bi bi-chevron-right small opacity-50"></i>
+
+                            </div>
+
+                        {% else %}
+
+                            <i class="bi bi-chevron-right small opacity-50"></i>
 
                         {% endif %}
-
-                        <i class="bi bi-chevron-right small opacity-50"></i>
 
                     </li>
 
@@ -779,11 +787,11 @@
 
         if (file.canDownload) {
 
-            downloadElement = `<a href="${file.downloadUrl}" class="text-decoration-none text-white fw-medium">${file.name}</a>`;
+            downloadElement = `<a href="${file.downloadUrl}" class="text-decoration-none text-white fw-medium file-item-name">${file.name}</a>`;
 
         } else {
 
-            downloadElement = `<span class="text-secondary fw-medium">${file.name} <i class="bi bi-lock-fill small ms-1" title="Чужое ДЗ"></i></span>`;
+            downloadElement = `<span class="text-secondary fw-medium file-item-name">${file.name} <i class="bi bi-lock-fill small ms-1" title="Чужое ДЗ"></i></span>`;
 
         }
 
@@ -1182,19 +1190,23 @@
 
                     </div>
 
-                    <a href="/delete_chapter/${data.id}" 
+                    <div class="d-flex align-items-center gap-2">
 
-                    class="text-muted hover-red small me-3" 
+                        <a href="/delete_chapter/${data.id}" 
 
-                    onclick="deleteChapterAjax(event, '${data.id}')" 
+                        class="text-muted hover-red small" 
 
-                    title="Удалить тему">
+                        onclick="deleteChapterAjax(event, '${data.id}')" 
 
-                        <i class="bi bi-trash"></i>
+                        title="Удалить тему">
 
-                    </a>
+                            <i class="bi bi-trash"></i>
 
-                    <i class="bi bi-chevron-right small opacity-50"></i>
+                        </a>
+
+                        <i class="bi bi-chevron-right small opacity-50"></i>
+
+                    </div>
 
                 `;
 
@@ -1548,11 +1560,9 @@
 
         color: var(--text-muted, #bbbbbb);
 
-        white-space: nowrap;
+        overflow-wrap: break-word;
 
-        overflow: hidden;
-
-        text-overflow: ellipsis;
+        word-break: break-word;
 
         max-width: 70%;
 
@@ -1599,6 +1609,22 @@
         transition: width 0.2s ease;
 
         box-shadow: 0 0 10px rgba(79, 75, 255, 0.5);
+
+    }
+
+    /* Название файла в списке - перенос на мобильных */
+
+    .file-item-name {
+
+        display: block;
+
+        overflow-wrap: break-word;
+
+        word-break: break-word;
+
+        max-width: 100%;
+
+        line-height: 1.4;
 
     }
 

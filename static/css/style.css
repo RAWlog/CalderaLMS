@@ -60,6 +60,19 @@ body {
     font-weight: 500;
     user-select: none;
     transition: color 0.3s;
+    gap: 12px;
+}
+
+.course-header > span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.course-header .d-flex {
+    flex-shrink: 0;
 }
 
 .course-header:hover {
@@ -103,12 +116,25 @@ body {
     background-color: transparent;
     border: 1px solid transparent; /* Чтобы не прыгало при активе */
     border-radius: 15px;
-    padding: 12px 20px;
+    padding: 12px 20px;  /* Увеличил правый padding с 15px до 20px для выравнивания с course-header */
     margin-bottom: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     color: var(--text-muted);
     text-decoration: none;
+    gap: 10px;
+}
+
+.topic-item > div:first-child {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.topic-item .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .topic-item:hover {
@@ -685,4 +711,515 @@ select.dark-input-clean {
 /* Если хотите, чтобы при фокусе подсказка немного тускнела или меняла цвет: */
 .dark-input-clean:focus::placeholder {
     color: #6c757d; /* Слегка более тёмный серый при вводе текста (по желанию) */
+}
+
+
+/* ========================================
+   МОДАЛЬНОЕ ОКНО ПРОГРЕССА ЗАГРУЗКИ
+   ======================================== */
+
+/* Контейнер модального окна */
+.upload-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: modalFadeIn 0.3s ease;
+    /* Блокируем взаимодействие с элементами за модальным окном */
+    pointer-events: auto;
+}
+
+/* Backdrop с blur эффектом */
+.upload-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    cursor: default;
+    /* Блокируем взаимодействие с элементами за backdrop */
+    pointer-events: auto;
+}
+
+/* Dialog окно */
+.upload-modal-dialog {
+    position: relative;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 28px;
+    width: 95%;
+    max-width: 600px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    animation: modalScaleIn 0.3s ease;
+    overflow: hidden;
+}
+
+/* Header модального окна */
+.upload-modal-header {
+    padding: 25px 30px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Body модального окна */
+.upload-modal-body {
+    padding: 20px 30px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 200px;
+    max-height: 60vh;
+}
+
+/* Кастомный скроллбар для списка файлов */
+.upload-modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.upload-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.upload-modal-body::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+}
+
+.upload-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #4f4bff;
+}
+
+/* Footer модального окна */
+.upload-modal-footer {
+    padding: 20px 30px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Кнопки модального окна */
+.upload-modal-btn {
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.upload-modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Список файлов */
+.upload-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Элемент файла */
+.upload-file-item {
+    background: var(--bg-element);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 18px;
+    transition: all 0.3s ease;
+    animation: fileItemSlideIn 0.4s ease;
+}
+
+/* Информация о файле */
+.upload-file-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.upload-file-info i {
+    font-size: 1.5rem;
+    color: var(--primary-glow);
+}
+
+.upload-file-name {
+    color: var(--text-main);
+    font-weight: 500;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Сообщение об ошибке */
+.upload-file-error {
+    color: #ff4d4d;
+    font-size: 0.85rem;
+    margin-left: auto;
+    animation: errorShake 0.5s ease;
+}
+
+/* Обертка прогресс-бара */
+.upload-progress-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Фон прогресс-бара */
+.upload-progress-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Прогресс-бар */
+.upload-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4f4bff, #6b66ff);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(79, 75, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Анимация заполнения прогресс-бара */
+.upload-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: progressShine 1.5s infinite;
+}
+
+/* Прогресс-бар с ошибкой */
+.upload-progress-bar.error {
+    background: linear-gradient(90deg, #ff4d4d, #ff6b6b);
+    box-shadow: 0 0 10px rgba(255, 77, 77, 0.5);
+}
+
+/* Процент прогресса */
+.upload-progress-percent {
+    color: var(--primary-glow);
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* Анимация успеха */
+.upload-success-animation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    animation: successFadeIn 0.5s ease;
+}
+
+/* Контейнер галочки */
+.success-checkmark {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 20px;
+}
+
+/* SVG галочка */
+.checkmark {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: block;
+    stroke-width: 2;
+    stroke: #4f4bff;
+    stroke-miterlimit: 10;
+}
+
+/* Круг галочки */
+.checkmark-circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 2;
+    stroke: #4f4bff;
+    fill: none;
+    animation: checkmarkCircle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+/* Сама галочка */
+.checkmark-check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    stroke: #4f4bff;
+    stroke-width: 3;
+    animation: checkmarkCheck 0.3s 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+/* Сообщение успеха */
+.success-message {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* ========================================
+   СТАТИСТИКА ОШИБОК
+   ======================================== */
+
+/* Контейнер статистики ошибок */
+.upload-error-stats {
+    display: none;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 12px;
+}
+
+/* Сводка статистики */
+.upload-stats-summary {
+    text-align: center;
+}
+
+.upload-stats-summary > i {
+    font-size: 3rem;
+    color: #ffc107;
+    margin-bottom: 15px;
+    display: block;
+}
+
+/* Сообщение статистики */
+.upload-stats-message {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 15px 0;
+    color: #ffc107;
+}
+
+/* Детали статистики */
+.upload-stats-details {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.upload-stats-details span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.95rem;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.upload-stats-success {
+    color: #4caf50;
+}
+
+.upload-stats-success i {
+    color: #4caf50;
+}
+
+.upload-stats-failed {
+    color: #f44336;
+}
+
+.upload-stats-failed i {
+    color: #f44336;
+}
+
+.upload-stats-total {
+    color: #9e9e9e;
+}
+
+/* ========================================
+   АНИМАЦИИ
+   ======================================== */
+
+/* Fade-in модального окна */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Scale-in диалога */
+@keyframes modalScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Slide-in элемента файла */
+@keyframes fileItemSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Анимация блеска прогресс-бара */
+@keyframes progressShine {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Анимация круга галочки */
+@keyframes checkmarkCircle {
+    0% {
+        stroke-dashoffset: 166;
+    }
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* Анимация рисования галочки */
+@keyframes checkmarkCheck {
+    0% {
+        stroke-dashoffset: 48;
+    }
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* Fade-in анимации успеха */
+@keyframes successFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Анимация тряски для ошибки */
+@keyframes errorShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* Анимация тряски dialog при клике на backdrop */
+@keyframes dialogShake {
+    0%, 100% {
+        transform: scale(1) translateY(0);
+    }
+    25% {
+        transform: scale(1.02) translateY(-2px);
+    }
+    50% {
+        transform: scale(0.98) translateY(2px);
+    }
+    75% {
+        transform: scale(1.01) translateY(-1px);
+    }
+}
+
+/* ========================================
+   АДАПТИВНЫЕ СТИЛИ
+   ======================================== */
+
+/* Мобильные устройства */
+@media (max-width: 768px) {
+    .upload-modal-dialog {
+        width: 95%;
+        max-width: 95%;
+        margin: 10px;
+    }
+    
+    .upload-modal-header,
+    .upload-modal-body,
+    .upload-modal-footer {
+        padding: 20px;
+    }
+    
+    .upload-file-item {
+        padding: 15px;
+    }
+    
+    .upload-modal-footer {
+        flex-direction: column;
+    }
+    
+    .upload-modal-btn {
+        width: 100%;
+    }
+    
+    .upload-file-name {
+        font-size: 0.9rem;
+    }
+    
+    .success-checkmark {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .success-message {
+        font-size: 1rem;
+    }
+}
+
+/* Десктоп */
+@media (min-width: 769px) {
+    .upload-modal-dialog {
+        max-width: 600px;
+    }
+}
+
+/* Планшеты */
+@media (min-width: 576px) and (max-width: 768px) {
+    .upload-modal-dialog {
+        width: 90%;
+    }
 }
