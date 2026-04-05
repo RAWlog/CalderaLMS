@@ -1636,6 +1636,30 @@ select.dark-input-clean {
     color: var(--text-main) !important;
 }
 
+/* Upload error container styles */
+.upload-error-container {
+    padding: 15px;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 12px;
+    animation: fadeIn 0.3s ease;
+}
+
+.upload-error-text {
+    color: #ffc107;
+    font-size: 0.9rem;
+}
+
+/* Upload error in light theme */
+[data-theme="light"] .upload-error-container {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.4);
+}
+
+[data-theme="light"] .upload-error-text {
+    color: #856404;
+}
+
 /* Modal body scrollbar in light theme */
 [data-theme="light"] .upload-modal-body::-webkit-scrollbar-thumb {
     background: #ccc;

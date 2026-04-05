@@ -100,23 +100,6 @@ def login(role_req):
             
     return render_template('login.html', role=role_req)
 
-# 3. Дэшборд (Общий, но контент разный)
-# @app.route('/dashboard')
-# @login_required
-# def dashboard():
-#     # Определяем, чьи курсы показывать
-#     target_mentor = current_user
-    
-#     if current_user.role == 'intern':
-#         if not current_user.mentor_id:
-#             return "У вас нет наставника!"
-#         target_mentor = User.query.get(current_user.mentor_id)
-
-#     # Загружаем курсы целевого наставника
-#     courses = Course.query.filter_by(mentor_id=target_mentor.id).all()
-    
-#     return render_template('dashboard.html', courses=courses, mentor=target_mentor)
-
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -179,15 +162,6 @@ def create_course():
         
     return jsonify({'status': 'error', 'msg': 'Нет прав'}), 403
 
-# @app.route('/delete_course/<int:id>')
-# @login_required
-# def delete_course(id):
-#     course = Course.query.get_or_404(id)
-#     if current_user.role == 'mentor' and course.mentor_id == current_user.id:
-#         db.session.delete(course)
-#         db.session.commit()
-#     return redirect(url_for('dashboard'))
-
 @app.route('/delete_course/<int:id>', methods=['POST', 'GET']) # Убедись, что методы указаны
 @login_required
 def delete_course(id):
@@ -200,33 +174,6 @@ def delete_course(id):
     
     # Вместо redirect возвращаем успех
     return jsonify({'status': 'success'})
-
-# @app.route('/delete_chapter/<int:id>')
-# @login_required
-# def delete_chapter(id):
-#     # Находим тему
-#     chapter = Chapter.query.get_or_404(id)
-#     # Находим курс, к которому она принадлежит
-#     course = Course.query.get(chapter.course_id)
-    
-#     # Проверяем права: только наставник и только владелец курса может удалить тему
-#     if current_user.role == 'mentor' and course.mentor_id == current_user.id:
-        
-#         # Сначала физически удаляем все файлы этой темы с диска
-#         for file_obj in chapter.files:
-#             try:
-#                 full_path = os.path.join(app.config['UPLOAD_FOLDER'], file_obj.filepath)
-#                 if os.path.exists(full_path):
-#                     os.remove(full_path)
-#             except Exception as e:
-#                 print(f"Ошибка физического удаления файла {file_obj.filename}: {e}")
-                
-#         # Затем удаляем саму тему из БД (связанные записи в File удалятся каскадно)
-#         db.session.delete(chapter)
-#         db.session.commit()
-        
-#     # Возвращаем на главную панель
-#     return redirect(url_for('dashboard'))
 
 @app.route('/delete_chapter/<int:id>', methods=['POST'])
 def delete_chapter(id):
@@ -266,49 +213,6 @@ def update_chapter(chapter_id):
         return jsonify({'status': 'success', 'title': chapter.title})
     
     return jsonify({'status': 'error'}), 403
-
-# @app.route('/upload_file/<int:chapter_id>', methods=['POST'])
-# @login_required
-# def upload_file(chapter_id):
-#     if 'file' not in request.files:
-#         return jsonify({'status': 'error', 'msg': 'No file'})
-    
-#     files = request.files.getlist('file')
-#     uploaded_files_data = []
-
-#     for file in files:
-#         if file.filename == '': continue
-        
-#         filename = secure_filename(file.filename)
-#         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#         file.save(path)
-        
-#         size = os.path.getsize(path)
-#         size_str = f"{size / 1024:.0f} Kb" if size < 1024*1024 else f"{size / (1024*1024):.2f} Mb"
-        
-#         new_file = File(
-#             filename=filename, 
-#             filepath=filename, 
-#             file_size=size_str, 
-#             chapter_id=chapter_id,
-#             uploader_id=current_user.id
-#         )
-#         db.session.add(new_file)
-#         db.session.commit() # Коммитим сразу, чтобы получить ID
-
-#         # Готовим данные для ответа
-#         uploaded_files_data.append({
-#             'id': new_file.id,
-#             'name': new_file.filename,
-#             'size': new_file.file_size,
-#             'role': current_user.role,
-#             'uploaderName': current_user.full_name,
-#             'downloadUrl': url_for('download', filename=new_file.filename),
-#             'deleteUrl': url_for('delete_file', file_id=new_file.id),
-#             'canDelete': True
-#         })
-    
-#     return jsonify({'status': 'success', 'files': uploaded_files_data})
 
 @app.route('/upload_file/<int:chapter_id>', methods=['POST'])
 @login_required
@@ -361,21 +265,6 @@ def upload_file(chapter_id):
 
 # --- ЗАГРУЗКА ФАЙЛОВ (Mentor и Intern) ---
 
-
-# @app.route('/download/<int:file_id>') # Теперь тут file_id, а не filename
-# @login_required
-# def download(file_id):
-#     file_obj = File.query.get_or_404(file_id)
-    
-#     # Берем файл с диска по безопасному имени (filepath), 
-#     # но отдаем пользователю под оригинальным русским (filename)
-#     return send_from_directory(
-#         app.config['UPLOAD_FOLDER'], 
-#         file_obj.filepath, 
-#         as_attachment=True,
-#         download_name=file_obj.filename 
-#     )
-
 @app.route('/download/<int:file_id>')
 @login_required
 def download(file_id):
@@ -397,20 +286,6 @@ def download(file_id):
         download_name=file_obj.filename 
     )
 
-# @app.route('/delete_file/<int:file_id>')
-# @login_required
-# def delete_file(file_id):
-#     file_obj = File.query.get_or_404(file_id)
-#     # Наставник удаляет все, Стажер только свои
-#     if current_user.role == 'mentor' or (current_user.role == 'intern' and file_obj.uploader_id == current_user.id):
-#         # Удаление физически (опционально)
-#         try:
-#             os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file_obj.filepath))
-#         except:
-#             pass
-#         db.session.delete(file_obj)
-#         db.session.commit()
-#     return redirect(url_for('dashboard'))
 @app.route('/delete_file/<int:file_id>', methods=['GET', 'POST', 'DELETE'])
 @login_required
 def delete_file(file_id):
@@ -514,6 +389,40 @@ def create_user():
     return redirect(url_for('admin_dashboard'))
 
 # 4. Маршрут для удаления пользователей
+@app.route('/admin/cleanup_files')
+@login_required
+def cleanup_orphaned_files():
+    """Удаляет из БД записи о файлах, которых нет на диске"""
+    if current_user.role != 'admin':
+        return "Доступ запрещен", 403
+    
+    orphaned_files = []
+    all_files = File.query.all()
+    
+    for file_obj in all_files:
+        full_path = os.path.join(app.config['UPLOAD_FOLDER'], file_obj.filepath)
+        if not os.path.exists(full_path):
+            orphaned_files.append({
+                'id': file_obj.id,
+                'filename': file_obj.filename,
+                'chapter_id': file_obj.chapter_id
+            })
+            db.session.delete(file_obj)
+    
+    db.session.commit()
+    
+    if orphaned_files:
+        return jsonify({
+            'status': 'success',
+            'msg': f'Удалено {len(orphaned_files)} осиротевших записей',
+            'deleted_files': orphaned_files
+        })
+    else:
+        return jsonify({
+            'status': 'success',
+            'msg': 'Все файлы на месте, осиротевших записей не найдено'
+        })
+
 @app.route('/admin/delete_user/<int:user_id>', methods=['POST'])
 @login_required
 def delete_user(user_id):

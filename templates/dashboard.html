@@ -122,6 +122,13 @@
                         <!-- Сюда JS будет рендерить блоки .file-item -->
                     </div>
                 </div>
+                <!-- Сообщение об ошибке (файл слишком большой) -->
+                <div id="uploadErrorContainer" class="upload-error-container" style="display: none; margin-bottom: 15px;">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                        <span id="uploadErrorText" class="upload-error-text"></span>
+                    </div>
+                </div>
                 <!-- Прогрессбар загрузки (НАД зоной загрузки) -->
                 <div id="uploadProgressContainer" class="upload-progress-container" style="display: none; margin-bottom: 15px;">
                     <div class="upload-progress-info">
@@ -440,9 +447,28 @@
         }
     }
     // 2. Загрузка файла (без перезагрузки) с прогрессбаром
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB в байтах
     function submitUpload(e, id) {
         const input = e.target.querySelector('input[type="file"]') || e.target;
         if (!input.files.length) return;
+        // Проверка размера файла
+        const errorContainer = document.getElementById('uploadErrorContainer');
+        const errorText = document.getElementById('uploadErrorText');
+        const oversizedFiles = [];
+        for (let i = 0; i < input.files.length; i++) {
+            if (input.files[i].size > MAX_FILE_SIZE) {
+                oversizedFiles.push(input.files[i].name);
+            }
+        }
+        if (oversizedFiles.length > 0) {
+            errorContainer.style.display = 'block';
+            errorText.textContent = 'Файл слишком большой! Максимальный размер: 50 МБ';
+            input.value = '';
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
+            return;
+        }
         const file = input.files[0]; // Первый файл для прогресса
         const formData = new FormData();
         for (let i = 0; i < input.files.length; i++) {
